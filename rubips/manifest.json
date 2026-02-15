@@ -3,6 +3,7 @@
   "short_name": "TCFH",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#050508",
   "theme_color": "#00f2ff",
   "icons": [
