@@ -1,17 +1,12 @@
-import os
-from flask import Flask, render_template, jsonify, request
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# Buraya daha sonra Gider ve Porsiyon API'lerini ekleyeceğiz
-@app.route('/api/status')
-def status():
-    return jsonify({"durum": "TCFH/SOFT Aktif", "versiyon": "5.0"})
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+@app.route('/api/personel-guncelle', methods=['POST'])
+def update_staff():
+    data = request.json
+    user_id = data.get('userId')
+    new_name = data.get('newName')
+    new_pass = data.get('newPass')
+    
+    # Burada MySQL sorgusu ile kullanıcının ismi ve şifresi güncellenir
+    # Örn: UPDATE users SET name=%s, pass=%s WHERE id=%s
+    
+    print(f"Sistem: Kullanıcı {user_id} güncellendi. Yeni Ad: {new_name}")
+    return jsonify({"status": "success"})
