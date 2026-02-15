@@ -2,78 +2,62 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TCFH/SOFT V5.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#00f2ff">
+    
+    <title>TCFH/SOFT - MASTER PANEL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
     
     <style>
-        body { background: #050508; color: white; font-family: 'Rajdhani', sans-serif; }
-        .masa-card { background: #0f0f16; border: 1px solid #222; border-radius: 15px; padding: 15px; }
-        .portion-btn { background: #1a1a26; border: 1px solid #333; padding: 5px; border-radius: 5px; font-size: 12px; }
-        .portion-btn.active { border-color: #00f2ff; color: #00f2ff; }
-        /* Mobil Uyumluluk */
-        @media (max-width: 768px) {
-            .grid-layout { grid-template-columns: repeat(2, 1fr) !important; }
-        }
+        /* PWA açıldığında telefonun üst kısmındaki boşluğu yönetir */
+        body { background: #050508; padding-top: env(safe-area-inset-top); }
+        .admin-panel { background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px; margin-top: 20px; }
+        .user-card { background: #1a1a26; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
+    <div id="view-ayarlar" class="view-section">
+        <div class="admin-panel">
+            <h3 class="text-cyan-400 font-bold mb-4"><i class="fas fa-users-cog"></i> PERSONEL YETKİ VE ŞİFRE YÖNETİMİ</h3>
+            
+            <div id="staffList">
+                <div class="user-card border border-gray-800">
+                    <div>
+                        <input type="text" id="editName_1" value="Garson Ali" class="bg-transparent border-b border-gray-700 focus:border-cyan-400 outline-none">
+                        <div class="text-[10px] text-gray-500">ROL: GARSON</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="password" id="editPass_1" placeholder="Yeni Şifre" class="bg-black text-xs p-1 rounded border border-gray-700 w-24">
+                        <button onclick="updateStaff(1)" class="bg-cyan-600 text-black px-3 py-1 rounded text-xs font-bold">GÜNCELLE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // PWA Kurulumu
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }
-    </script>
 
-    <div class="p-4">
-        <h1 class="text-2xl font-bold text-cyan-400 mb-4">TCFH/SOFT V5.0</h1>
-        
-        <div class="bg-gray-900 p-4 rounded-xl mb-6 border border-red-900/30">
-            <h2 class="text-red-400 font-bold mb-2 text-sm"><i class="fas fa-wallet"></i> GİDER GİRİŞİ (Personel, Fatura vb.)</h2>
-            <div class="flex gap-2">
-                <input type="text" id="giderAd" placeholder="Gider Adı" class="bg-black border border-gray-800 p-2 rounded text-sm w-full">
-                <input type="number" id="giderTutar" placeholder="₺" class="bg-black border border-gray-800 p-2 rounded text-sm w-24">
-                <button onclick="giderKaydet()" class="bg-red-600 text-white px-4 rounded text-sm font-bold">İŞLE</button>
-            </div>
-        </div>
+        // PERSONEL GÜNCELLEME (Python API'ye gönderir)
+        async function updateStaff(userId) {
+            const newName = document.getElementById(`editName_${userId}`).value;
+            const newPass = document.getElementById(`editPass_${userId}`).value;
 
-        <div id="masalarGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 grid-layout">
-            </div>
-    </div>
-
-    <div id="porsiyonModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center p-6 z-[100]">
-        <div class="bg-gray-900 p-6 rounded-2xl w-full max-w-sm border border-cyan-500">
-            <h3 class="text-xl font-bold mb-4">PORSİYON SEÇİN</h3>
-            <div class="grid grid-cols-3 gap-2 mb-6">
-                <button class="portion-btn" onclick="setPorsiyon(0.5)">Yarım</button>
-                <button class="portion-btn active" onclick="setPorsiyon(1)">Tam</button>
-                <button class="portion-btn" onclick="setPorsiyon(1.5)">1.5</button>
-            </div>
-            <button onclick="siparisTamamla()" class="bg-cyan-500 text-black font-bold w-full py-3 rounded-lg">EKLE</button>
-        </div>
-    </div>
-
-    <script>
-        async function giderKaydet() {
-            const ad = document.getElementById('giderAd').value;
-            const tutar = document.getElementById('giderTutar').value;
-            if(!ad || !tutar) return alert("Bilgileri doldur!");
-
-            const res = await fetch('/api/gider-ekle', {
+            const res = await fetch('/api/personel-guncelle', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ ad, tutar, tarih: new Date().toLocaleString() })
+                body: JSON.stringify({ userId, newName, newPass })
             });
-            if(res.ok) alert("Gider kaydedildi ve loglara işlendi.");
-        }
-
-        function setPorsiyon(val) {
-            document.querySelectorAll('.portion-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            console.log("Seçilen porsiyon katsayısı:", val);
+            
+            if(res.ok) {
+                alert("Personel bilgileri ve şifresi başarıyla güncellendi!");
+            }
         }
     </script>
 </body>
