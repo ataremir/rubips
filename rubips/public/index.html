@@ -3,100 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RUBI PS | MANAGEMENT</title>
+    <title>RUBI PS CAFE - Yönetim Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Audiowide&display=swap" rel="stylesheet">
+    
     <style>
-        body { background: #050505; color: #fff; font-family: 'Orbitron', sans-serif; margin: 0; }
-        .navbar { background: #111; padding: 15px; border-bottom: 2px solid #00f2ff; box-shadow: 0 0 15px #00f2ff; text-align: center; }
-        .container { padding: 20px; }
-        
-        .stats { display: flex; justify-content: space-around; margin-bottom: 30px; background: #1a1a1a; padding: 15px; border-radius: 10px; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
-        
-        .card { 
-            background: linear-gradient(145deg, #111, #1a1a1a);
-            border: 1px solid #333; border-radius: 15px; padding: 20px;
-            text-align: center; transition: 0.4s;
-        }
-        .card.dolu { border-color: #ff0055; box-shadow: 0 0 20px #ff0055; }
-        .card.bos { border-color: #00ff88; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Rajdhani', sans-serif; background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%); color: #e0f4ff; min-height: 100vh; }
 
-        .time-display { font-size: 35px; margin: 15px 0; font-weight: bold; color: #00f2ff; }
-        
-        button { 
-            width: 100%; padding: 12px; border: none; border-radius: 8px; 
-            font-weight: bold; cursor: pointer; transition: 0.2s;
-        }
-        .btn-open { background: #00ff88; color: #000; }
-        .btn-close { background: #ff0055; color: #fff; }
-        .add-area { margin-top: 20px; text-align: center; }
-        input { padding: 10px; border-radius: 5px; background: #222; color: #fff; border: 1px solid #444; }
+        /* LOGIN SCREEN */
+        .login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 100%); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .login-screen.hidden { display: none; }
+        .login-box { background: rgba(18, 18, 31, 0.95); border: 3px solid #00ffff; border-radius: 20px; padding: 50px; text-align: center; box-shadow: 0 0 60px rgba(0, 255, 255, 0.6); animation: loginPulse 2s infinite; max-width: 400px; width: 90%; }
+        @keyframes loginPulse { 0%, 100% { box-shadow: 0 0 60px rgba(0, 255, 255, 0.6); } 50% { box-shadow: 0 0 80px rgba(0, 255, 255, 0.9); } }
+        .login-logo { font-family: 'Audiowide', cursive; font-size: 48px; background: linear-gradient(135deg, #00ffff, #ff006e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 30px; }
+        .login-input { background: rgba(10, 10, 26, 0.8); border: 3px solid rgba(0, 255, 255, 0.5); border-radius: 12px; padding: 18px; color: #00ffff; font-size: 24px; width: 100%; text-align: center; letter-spacing: 8px; font-weight: 700; margin-bottom: 20px; }
+        .login-input:focus { outline: none; border-color: #00ffff; box-shadow: 0 0 30px rgba(0, 255, 255, 0.8); }
+        .login-btn { background: linear-gradient(135deg, #00ffff, #0088cc); border: none; border-radius: 12px; padding: 18px 40px; color: white; font-size: 20px; font-weight: 700; cursor: pointer; width: 100%; text-transform: uppercase; box-shadow: 0 5px 30px rgba(0, 255, 255, 0.5); transition: all 0.3s; }
+        .login-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 40px rgba(0, 255, 255, 0.8); }
+
+        /* MAIN APP */
+        .app-container { display: none; }
+        .app-container.active { display: block; }
+
+        /* TABLE CARDS */
+        .table-card { background: rgba(18, 18, 31, 0.9); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 16px; padding: 20px; transition: all 0.3s; cursor: pointer; position: relative; }
+        .table-card:hover { border-color: #00ffff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.4); transform: translateY(-5px); }
+        .table-card.occupied { border-color: #ff006e; background: rgba(255, 0, 110, 0.1); }
+        .table-card.warning-5 { border-color: #ffa500; animation: warningPulse 1s infinite; }
+        .table-card.warning-end { border-color: #ff0000; animation: urgentPulse 0.5s infinite; }
+        @keyframes warningPulse { 0%, 100% { box-shadow: 0 0 20px rgba(255, 165, 0, 0.8); } 50% { box-shadow: 0 0 40px rgba(255, 165, 0, 1); } }
+        @keyframes urgentPulse { 0%, 100% { box-shadow: 0 0 30px rgba(255, 0, 0, 1); } 50% { box-shadow: 0 0 50px rgba(255, 0, 0, 1); } }
+        .countdown-timer { font-family: 'Courier New', monospace; font-size: 28px; font-weight: 900; color: #00ffff; text-shadow: 0 0 15px rgba(0, 255, 255, 0.8); }
+        .countdown-timer.warning { color: #ffa500; text-shadow: 0 0 15px rgba(255, 165, 0, 0.8); }
+        .countdown-timer.ended { color: #ff0000; text-shadow: 0 0 15px rgba(255, 0, 0, 0.8); }
+
+        /* BUTTONS */
+        .btn { padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.3s; border: none; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: linear-gradient(135deg, #00ffff, #0088cc); color: white; box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3); }
+        .btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3); }
+        .btn-danger { background: linear-gradient(135deg, #ff006e, #cc0044); color: white; box-shadow: 0 4px 15px rgba(255, 0, 110, 0.3); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+        .btn:hover { transform: translateY(-2px); }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+        .modal.active { display: flex; }
+        .modal-content { background: rgba(18, 18, 31, 0.98); border: 3px solid #00ffff; border-radius: 20px; padding: 30px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .input-field { background: rgba(10, 10, 26, 0.8); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 8px; padding: 12px; color: #e0f4ff; font-size: 16px; width: 100%; }
+        .input-field:focus { outline: none; border-color: #00ffff; box-shadow: 0 0 10px rgba(0, 255, 255, 0.3); }
+        .stat-card { background: rgba(18, 18, 31, 0.8); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 14px; padding: 20px; }
+        .stat-value { font-size: 36px; font-weight: 900; color: #00ffff; text-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
+        .product-item { background: rgba(0, 255, 255, 0.1); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .product-item:hover { background: rgba(0, 255, 255, 0.2); border-color: #00ffff; }
+        .badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .badge-available { background: rgba(34, 197, 94, 0.3); color: #22c55e; border: 1px solid #22c55e; }
+        .badge-occupied { background: rgba(255, 0, 110, 0.3); color: #ff006e; border: 1px solid #ff006e; }
+
+        /* WARNING NOTIFICATION */
+        .warning-notification { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #ff0000, #cc0000); border: 4px solid #fff; border-radius: 20px; padding: 40px 60px; z-index: 9999; box-shadow: 0 0 100px rgba(255, 0, 0, 0.8); animation: warningShake 0.5s infinite; display: none; text-align: center; min-width: 400px; }
+        .warning-notification.show { display: block; }
+        @keyframes warningShake { 0%, 100% { transform: translate(-50%, -50%) rotate(0deg); } 25% { transform: translate(-50%, -50%) rotate(-2deg); } 75% { transform: translate(-50%, -50%) rotate(2deg); } }
+
+        /* TABS */
+        .tab-btn { padding: 12px 24px; background: rgba(18, 18, 31, 0.6); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 10px 10px 0 0; cursor: pointer; transition: all 0.3s; font-weight: 700; }
+        .tab-btn.active { background: rgba(0, 255, 255, 0.2); border-color: #00ffff; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
-    <div class="navbar"><h1>RUBI PS ADMIN</h1></div>
-    <div class="container">
-        <div class="grid" id="masaListesi"></div>
-        <div class="add-area">
-            <input type="number" id="yeniMasaNo" placeholder="Masa No">
-            <button onclick="masaEkle()" style="width: auto; background: #00f2ff;">+ MASA EKLE</button>
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <div class="login-logo">🎮 RUBI PS</div>
+            <h2 class="text-2xl mb-6 text-cyan-400">GİRİŞ YAPINIZ</h2>
+            <input type="password" id="loginPassword" class="login-input" placeholder="----" maxlength="4" autofocus onkeypress="if(event.key==='Enter') checkPassword()">
+            <button onclick="checkPassword()" class="login-btn"><i class="fas fa-sign-in-alt mr-2"></i>GİRİŞ</button>
+            <p class="text-sm text-gray-400 mt-4">Şifre: 1907</p>
+        </div>
+    </div>
+
+    <div id="warningNotification" class="warning-notification">
+        <div style="font-size: 80px; margin-bottom: 20px;"><i class="fas fa-exclamation-triangle"></i></div>
+        <div id="warningText" style="font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 10px;">UYARI!</div>
+        <div id="warningSubtext" style="font-size: 18px; color: #fff; margin-bottom: 20px;">Süre doldu!</div>
+        <button onclick="closeWarning()" class="btn btn-primary"><i class="fas fa-check"></i> ANLADIM</button>
+    </div>
+
+    <div id="mainApp" class="app-container p-6">
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2" style="color: #00ffff; text-shadow: 0 0 20px rgba(0, 255, 255, 0.5); font-family: 'Audiowide';"><i class="fas fa-gamepad mr-3"></i>RUBI PS CAFE</h1>
+                    <p class="text-gray-400">Profesyonel Yönetim Sistemi</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-400">Kullanıcı: <span class="text-cyan-400 font-bold">Admin</span></div>
+                    <div id="currentTime" class="text-lg font-bold text-cyan-400"></div>
+                    <button onclick="logout()" class="btn btn-danger mt-2"><i class="fas fa-sign-out-alt"></i> ÇIKIŞ</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-2 mb-6">
+            <button class="tab-btn active" onclick="switchTab('masalar')"><i class="fas fa-th-large mr-2"></i>MASALAR</button>
+            <button class="tab-btn" onclick="switchTab('urunler')"><i class="fas fa-box mr-2"></i>ÜRÜNLER</button>
+            <button class="tab-btn" onclick="switchTab('rapor')"><i class="fas fa-chart-bar mr-2"></i>Z-RAPORU</button>
+        </div>
+
+        <div id="masalarTab" class="tab-content active">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Saatlik Ücret (₺)</label>
+                    <input type="number" id="hourlyRate" class="input-field" value="100" min="1" onchange="saveSettings()">
+                </div>
+                <div class="flex items-end"><button onclick="addNewTable()" class="btn btn-success w-full"><i class="fas fa-plus"></i> YENİ MASA EKLE</button></div>
+                <div class="flex items-end"><button onclick="resetAllTables()" class="btn btn-danger w-full"><i class="fas fa-redo"></i> TÜM MASALARI SIFIRLA</button></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card"><div class="text-sm text-gray-400 mb-1">Aktif Masalar</div><div class="stat-value" id="activeTables">0</div></div>
+                <div class="stat-card"><div class="text-sm text-gray-400 mb-1">Toplam Ciro</div><div class="stat-value text-green-400" id="totalRevenue">₺0</div></div>
+                <div class="stat-card"><div class="text-sm text-gray-400 mb-1">Nakit</div><div class="stat-value text-yellow-400" id="cashBalance">₺0</div></div>
+                <div class="stat-card"><div class="text-sm text-gray-400 mb-1">Kart</div><div class="stat-value text-blue-400" id="cardBalance">₺0</div></div>
+            </div>
+
+            <div id="tablesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4"></div>
+        </div>
+
+        <div id="urunlerTab" class="tab-content">
+            <button onclick="openAddProductModal()" class="btn btn-success mb-4"><i class="fas fa-plus"></i> YENİ ÜRÜN EKLE</button>
+            <div class="grid grid-cols-1 gap-3" id="productsList"></div>
+        </div>
+
+        <div id="raporTab" class="tab-content">
+            <button onclick="generateZReport()" class="btn btn-primary mb-4"><i class="fas fa-sync"></i> RAPORU GÜNCELLE</button>
+            <div id="zReportContent"></div>
+        </div>
+    </div>
+
+    <div id="tableModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-cyan-400"><i class="fas fa-gamepad mr-2"></i><span id="modalTableName">Masa</span></h2>
+                <button onclick="closeModal('tableModal')" class="text-3xl text-red-400"><i class="fas fa-times-circle"></i></button>
+            </div>
+            <div class="mb-6"><label class="block text-sm text-gray-400 mb-2">Süre (Dakika)</label><input type="number" id="tableDuration" class="input-field" placeholder="örn: 60" min="1"></div>
+            <div class="flex justify-between items-center mb-4"><span class="text-gray-400">Kalan Süre:</span><div class="countdown-timer" id="modalTimer">00:00</div></div>
+            <div class="flex justify-between items-center mb-6"><span class="text-gray-400">Ücret:</span><div class="text-3xl font-bold text-cyan-400" id="modalTotal">₺0</div></div>
+            <div class="mb-6">
+                <h3 class="text-lg font-bold mb-3 text-cyan-400 flex justify-between"><span><i class="fas fa-shopping-cart mr-2"></i>Ürünler</span><button onclick="openAddProductToTable()" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> EKLE</button></h3>
+                <div id="tableProducts"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="startTable()" id="startTableBtn" class="btn btn-success w-full"><i class="fas fa-play"></i> BAŞLAT</button>
+                <button onclick="stopTable()" id="stopTableBtn" class="btn btn-danger w-full" style="display:none;"><i class="fas fa-stop"></i> DURDUR</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-3" id="checkoutBtns" style="display:none;">
+                <button onclick="checkout('nakit')" class="btn btn-primary w-full"><i class="fas fa-money-bill-wave"></i> NAKİT</button>
+                <button onclick="checkout('kart')" class="btn btn-primary w-full"><i class="fas fa-credit-card"></i> KART</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-cyan-400"><i class="fas fa-plus mr-2"></i>Yeni Ürün Ekle</h2><button onclick="closeModal('addProductModal')" class="text-3xl text-red-400"><i class="fas fa-times-circle"></i></button></div>
+            <div class="space-y-4">
+                <div><label class="block text-sm text-gray-400 mb-2">Ürün Adı</label><input type="text" id="newProductName" class="input-field" placeholder="örn: Coca Cola"></div>
+                <div><label class="block text-sm text-gray-400 mb-2">Satış Fiyatı (₺)</label><input type="number" id="newProductPrice" class="input-field" placeholder="örn: 20" min="0" step="0.5"></div>
+                <div><label class="block text-sm text-gray-400 mb-2">Maliyet (₺)</label><input type="number" id="newProductCost" class="input-field" placeholder="örn: 12" min="0" step="0.5"></div>
+            </div>
+            <button onclick="addProduct()" class="btn btn-success w-full mt-6"><i class="fas fa-check"></i> EKLE</button>
+        </div>
+    </div>
+
+    <div id="selectProductModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold text-cyan-400"><i class="fas fa-box mr-2"></i>Ürün Seç</h2><button onclick="closeModal('selectProductModal')" class="text-3xl text-red-400"><i class="fas fa-times-circle"></i></button></div>
+            <div id="selectProductList"></div>
         </div>
     </div>
 
     <script>
-        async function verileriYukle() {
-            const res = await fetch('/api/masalar');
-            const data = await res.json();
-            const liste = document.getElementById('masaListesi');
-            liste.innerHTML = '';
+        const ADMIN_PASSWORD = '1907';
+        const STORAGE_KEY = 'rubiPSCafe_v3';
+        let appState = { tables: {}, products: [{ id: 1, name: 'Coca Cola', price: 20, cost: 12 }, { id: 2, name: 'Su', price: 5, cost: 2 }, { id: 3, name: 'Cips', price: 15, cost: 8 }, { id: 4, name: 'Red Bull', price: 30, cost: 18 }], settings: { hourlyRate: 100 }, dailyStats: { totalRevenue: 0, cash: 0, card: 0, totalCost: 0 } };
+        let currentTable = null;
+        let sessionWarnings = {};
 
-            data.forEach(m => {
+        function checkPassword() { if (document.getElementById('loginPassword').value === ADMIN_PASSWORD) { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.add('active'); init(); } else { alert('❌ Hatalı şifre!'); document.getElementById('loginPassword').value = ''; } }
+        function logout() { if (confirm('Çıkış yapmak istediğinize emin misiniz?')) location.reload(); }
+        function init() { loadFromStorage(); ensureTablesExist(); renderTables(); renderProducts(); updateStats(); setInterval(updateClock, 1000); setInterval(updateCountdowns, 1000); setInterval(saveToStorage, 10000); updateClock(); }
+        function loadFromStorage() { const saved = localStorage.getItem(STORAGE_KEY); if (saved) { try { const loaded = JSON.parse(saved); appState = { ...appState, ...loaded }; Object.values(appState.tables).forEach(table => { if (table.startTime) table.startTime = new Date(table.startTime); if (table.endTime) table.endTime = new Date(table.endTime); }); } catch (e) { console.error('Load error:', e); } } document.getElementById('hourlyRate').value = appState.settings.hourlyRate; }
+        function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appState)); }
+        function saveSettings() { appState.settings.hourlyRate = parseInt(document.getElementById('hourlyRate').value) || 100; saveToStorage(); }
+        function ensureTablesExist() { if (Object.keys(appState.tables).length === 0) { for (let i = 1; i <= 12; i++) { appState.tables[`table${i}`] = { id: i, name: `Masa ${i}`, status: 'available', duration: null, startTime: null, endTime: null, products: [] }; } saveToStorage(); } }
+        function updateClock() { document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('tr-TR'); }
+        function switchTab(tab) { document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active')); event.target.closest('.tab-btn').classList.add('active'); document.getElementById(tab + 'Tab').classList.add('active'); if (tab === 'rapor') generateZReport(); }
+        
+        function addNewTable() { const maxId = Math.max(...Object.values(appState.tables).map(t => t.id), 0); const newId = maxId + 1; appState.tables[`table${newId}`] = { id: newId, name: `Masa ${newId}`, status: 'available', duration: null, startTime: null, endTime: null, products: [] }; saveToStorage(); renderTables(); }
+        function resetAllTables() { if (!confirm('⚠️ TÜM MASALAR SIFIRLANACAK! Emin misiniz?')) return; Object.values(appState.tables).forEach(table => { table.status = 'available'; table.duration = null; table.startTime = null; table.endTime = null; table.products = []; }); sessionWarnings = {}; saveToStorage(); renderTables(); }
+        
+        function renderTables() {
+            const grid = document.getElementById('tablesGrid'); grid.innerHTML = '';
+            Object.entries(appState.tables).forEach(([key, table]) => {
                 const card = document.createElement('div');
-                card.className = `card ${m.durum}`;
-                card.innerHTML = `
-                    <h2 style="margin:0">MASA ${m.id}</h2>
-                    <div class="time-display">${m.durum === 'dolu' ? m.kalan_dakika + ' dk' : 'KAPALI'}</div>
-                    ${m.durum === 'bos' 
-                        ? `<button class="btn-open" onclick="masaAc(${m.id})">SÜRE BAŞLAT (60 DK)</button>`
-                        : `<button class="btn-close" onclick="masaKapat(${m.id})">MASAYI KAPAT / HESAP</button>`
-                    }
-                `;
-                liste.appendChild(card);
+                let warningClass = '', timeDisplay = '--:--', total = 0;
+                if (table.status === 'occupied' && table.startTime && table.endTime) {
+                    const now = Date.now(), end = table.endTime.getTime(), remaining = Math.max(0, Math.floor((end - now) / 1000));
+                    timeDisplay = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
+                    total = (Math.floor((now - table.startTime.getTime()) / 60000) / 60) * appState.settings.hourlyRate;
+                    if (remaining === 0) { warningClass = 'warning-end'; checkEndWarning(table, key); } else if (remaining <= 300) { warningClass = 'warning-5'; check5MinWarning(table, key); }
+                }
+                card.className = `table-card ${table.status === 'occupied' ? 'occupied' : ''} ${warningClass}`;
+                card.onclick = () => openTableModal(key);
+                card.innerHTML = `<div class="flex justify-between items-center mb-3"><h3 class="text-xl font-bold">${table.name}</h3><span class="badge ${table.status === 'available' ? 'badge-available' : 'badge-occupied'}">${table.status === 'available' ? 'Boş' : 'Dolu'}</span></div><div class="text-center"><div class="countdown-timer ${warningClass === 'warning-5' ? 'warning' : warningClass === 'warning-end' ? 'ended' : ''}">${timeDisplay}</div>${table.status === 'occupied' ? `<div class="text-sm text-gray-400 mt-2">Ücret</div><div class="text-xl font-bold text-green-400">₺${total.toFixed(2)}</div>` : ''}</div>`;
+                grid.appendChild(card);
             });
         }
 
-        async function masaAc(id) {
-            await fetch('/api/masa-ac', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id })
-            });
-            verileriYukle();
+        function check5MinWarning(table, key) { if (!sessionWarnings[`${key}_5min`]) { sessionWarnings[`${key}_5min`] = true; showWarning(table.name, '5 DAKİKA KALDI!'); playSound(); } }
+        function checkEndWarning(table, key) { if (!sessionWarnings[`${key}_end`]) { sessionWarnings[`${key}_end`] = true; showWarning(table.name, 'SÜRE BİTTİ!'); playSound(); } }
+        function updateCountdowns() { renderTables(); if (currentTable) updateModalContent(); }
+        function showWarning(tableName, message) { document.getElementById('warningText').textContent = tableName; document.getElementById('warningSubtext').textContent = message; document.getElementById('warningNotification').classList.add('show'); setTimeout(() => closeWarning(), 5000); }
+        function closeWarning() { document.getElementById('warningNotification').classList.remove('show'); }
+        function playSound() { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 800; gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5); } catch (e) {} }
+
+        function openTableModal(key) {
+            currentTable = appState.tables[key]; document.getElementById('modalTableName').textContent = currentTable.name;
+            if (currentTable.status === 'available') { document.getElementById('tableDuration').value = ''; document.getElementById('tableDuration').disabled = false; document.getElementById('startTableBtn').style.display = 'block'; document.getElementById('stopTableBtn').style.display = 'none'; document.getElementById('checkoutBtns').style.display = 'none'; } 
+            else { document.getElementById('tableDuration').value = currentTable.duration; document.getElementById('tableDuration').disabled = true; document.getElementById('startTableBtn').style.display = 'none'; document.getElementById('stopTableBtn').style.display = 'block'; document.getElementById('checkoutBtns').style.display = 'grid'; }
+            renderTableProducts(); updateModalContent(); openModal('tableModal');
+        }
+        function updateModalContent() {
+            if (!currentTable || currentTable.status === 'available') return;
+            const now = Date.now(), end = currentTable.endTime.getTime(), remaining = Math.max(0, Math.floor((end - now) / 1000));
+            document.getElementById('modalTimer').textContent = `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
+            const total = ((Math.floor((now - currentTable.startTime.getTime()) / 60000) / 60) * appState.settings.hourlyRate) + currentTable.products.reduce((sum, p) => sum + p.price, 0);
+            document.getElementById('modalTotal').textContent = `₺${total.toFixed(2)}`;
         }
 
-        async function masaKapat(id) {
-            if(confirm('Masa ' + id + ' hesabı kapatılsın mı?')) {
-                await fetch('/api/masa-kapat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ id })
-                });
-                verileriYukle();
-            }
+        function renderTableProducts() { const c = document.getElementById('tableProducts'); c.innerHTML = ''; currentTable.products.forEach((p, i) => { const d = document.createElement('div'); d.className = 'product-item'; d.innerHTML = `<div><div class="font-bold">${p.name}</div><div class="text-sm text-gray-400">₺${p.price.toFixed(2)}</div></div><button onclick="removeProductFromTable(${i})" class="btn btn-danger"><i class="fas fa-trash"></i></button>`; c.appendChild(d); }); }
+        function removeProductFromTable(i) { if (confirm('Silinsin mi?')) { currentTable.products.splice(i, 1); saveToStorage(); renderTableProducts(); updateModalContent(); } }
+        function startTable() { const d = parseInt(document.getElementById('tableDuration').value); if (!d || d < 1) return alert('Süre gir!'); currentTable.status = 'occupied'; currentTable.duration = d; currentTable.startTime = new Date(); currentTable.endTime = new Date(Date.now() + d * 60000); currentTable.products = []; saveToStorage(); closeModal('tableModal'); renderTables(); }
+        function stopTable() { if (confirm('Durdurulsun mu?')) { const k = Object.keys(appState.tables).find(k => appState.tables[k] === currentTable); delete sessionWarnings[`${k}_5min`]; delete sessionWarnings[`${k}_end`]; currentTable.status = 'available'; currentTable.startTime = null; currentTable.endTime = null; currentTable.products = []; saveToStorage(); closeModal('tableModal'); renderTables(); } }
+        function checkout(method) {
+            const elapsed = Math.floor((Date.now() - currentTable.startTime.getTime()) / 60000), total = ((elapsed / 60) * appState.settings.hourlyRate) + currentTable.products.reduce((s, p) => s + p.price, 0);
+            appState.dailyStats.totalRevenue += total; appState.dailyStats.totalCost += currentTable.products.reduce((s, p) => s + p.cost, 0);
+            if (method === 'nakit') appState.dailyStats.cash += total; else appState.dailyStats.card += total;
+            const k = Object.keys(appState.tables).find(k => appState.tables[k] === currentTable); delete sessionWarnings[`${k}_5min`]; delete sessionWarnings[`${k}_end`];
+            currentTable.status = 'available'; currentTable.startTime = null; currentTable.endTime = null; currentTable.products = []; saveToStorage(); closeModal('tableModal'); renderTables(); updateStats();
         }
 
-        async function masaEkle() {
-            const id = document.getElementById('yeniMasaNo').value;
-            await fetch('/api/masa-ekle', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id })
-            });
-            verileriYukle();
+        function renderProducts() { const l = document.getElementById('productsList'); l.innerHTML = ''; appState.products.forEach(p => { const div = document.createElement('div'); div.className = 'product-item'; div.innerHTML = `<div><div class="font-bold text-lg">${p.name}</div><div class="text-sm text-gray-400">Satış: ₺${p.price} | Maliyet: ₺${p.cost}</div></div><button onclick="deleteProduct(${p.id})" class="btn btn-danger"><i class="fas fa-trash"></i> SİL</button>`; l.appendChild(div); }); }
+        function openAddProductModal() { document.getElementById('newProductName').value = ''; openModal('addProductModal'); }
+        function addProduct() { const n = document.getElementById('newProductName').value, p = parseFloat(document.getElementById('newProductPrice').value), c = parseFloat(document.getElementById('newProductCost').value); if (!n || !p || !c) return alert('Boş alan bırakma!'); appState.products.push({ id: Math.max(...appState.products.map(p => p.id), 0) + 1, name: n, price: p, cost: c }); saveToStorage(); renderProducts(); closeModal('addProductModal'); }
+        function deleteProduct(id) { if (confirm('Silinsin mi?')) { appState.products = appState.products.filter(p => p.id !== id); saveToStorage(); renderProducts(); } }
+        function openAddProductToTable() { const l = document.getElementById('selectProductList'); l.innerHTML = ''; appState.products.forEach(p => { const d = document.createElement('div'); d.className = 'product-item cursor-pointer'; d.onclick = () => { currentTable.products.push({...p}); saveToStorage(); renderTableProducts(); updateModalContent(); closeModal('selectProductModal'); }; d.innerHTML = `<div><div class="font-bold">${p.name}</div><div class="text-sm text-gray-400">₺${p.price.toFixed(2)}</div></div><i class="fas fa-plus text-2xl text-cyan-400"></i>`; l.appendChild(d); }); openModal('selectProductModal'); }
+
+        function generateZReport() {
+            const r = appState.dailyStats.totalRevenue, c = appState.dailyStats.totalCost, p = r - c;
+            document.getElementById('zReportContent').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="stat-card"><div class="text-sm text-gray-400 mb-2">Ciro</div><div class="stat-value text-green-400">₺${r.toFixed(2)}</div></div><div class="stat-card"><div class="text-sm text-gray-400 mb-2">Maliyet</div><div class="stat-value text-red-400">₺${c.toFixed(2)}</div></div><div class="stat-card"><div class="text-sm text-gray-400 mb-2">Net Kâr</div><div class="stat-value ${p >= 0 ? 'text-cyan-400' : 'text-red-400'}">₺${p.toFixed(2)}</div></div><div class="stat-card"><div class="text-sm text-gray-400 mb-2">Nakit</div><div class="stat-value text-yellow-400">₺${appState.dailyStats.cash.toFixed(2)}</div></div></div>`;
         }
 
-        setInterval(verileriYukle, 5000);
-        verileriYukle();
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
     </script>
 </body>
 </html>
