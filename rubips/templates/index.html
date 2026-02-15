@@ -6,58 +6,127 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/manifest.json">
-    
-    <title>TCFH/SOFT - MASTER PANEL</title>
+    <title>TCFH/SOFT V5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Audiowide&display=swap" rel="stylesheet">
     
     <style>
-        /* PWA açıldığında telefonun üst kısmındaki boşluğu yönetir */
-        body { background: #050508; padding-top: env(safe-area-inset-top); }
-        .admin-panel { background: #111; border: 1px solid #333; padding: 20px; border-radius: 15px; margin-top: 20px; }
-        .user-card { background: #1a1a26; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        :root { --neon: #00f2ff; --pink: #ff0055; --bg: #050508; --panel: #0f0f16; }
+        body { background: var(--bg); color: white; font-family: 'Rajdhani', sans-serif; overflow: hidden; }
+
+        /* MASAÜSTÜ (PC) DÜZENİ */
+        @media (min-width: 1024px) {
+            .main-layout { display: grid; grid-template-columns: 1fr 450px; height: 100vh; }
+            .sidebar-right { border-left: 2px solid #222; display: flex; flex-direction: column; background: #0a0a12; }
+            .mobile-nav { display: none; }
+        }
+
+        /* MOBİL DÜZENİ */
+        @media (max-width: 1023px) {
+            .main-layout { display: block; height: calc(100vh - 60px); overflow-y: auto; }
+            .sidebar-right { display: none; } /* Mobil modal kullanır */
+            .mobile-nav { display: flex; position: fixed; bottom: 0; width: 100%; height: 60px; background: #0a0a12; border-top: 1px solid #333; z-index: 50; }
+        }
+
+        /* ORTAK STİLLER */
+        .card { background: var(--panel); border: 1px solid #222; transition: 0.2s; cursor: pointer; }
+        .card:hover { border-color: var(--neon); transform: translateY(-3px); }
+        .card.ps { border-top: 4px solid var(--neon); }
+        .card.kafe { border-top: 4px solid var(--pink); }
+        
+        input, select { background: #1a1a26; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; }
+        .btn-action { height: 50px; font-weight: bold; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     </style>
 </head>
 <body>
-    <div id="view-ayarlar" class="view-section">
-        <div class="admin-panel">
-            <h3 class="text-cyan-400 font-bold mb-4"><i class="fas fa-users-cog"></i> PERSONEL YETKİ VE ŞİFRE YÖNETİMİ</h3>
-            
-            <div id="staffList">
-                <div class="user-card border border-gray-800">
-                    <div>
-                        <input type="text" id="editName_1" value="Garson Ali" class="bg-transparent border-b border-gray-700 focus:border-cyan-400 outline-none">
-                        <div class="text-[10px] text-gray-500">ROL: GARSON</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="password" id="editPass_1" placeholder="Yeni Şifre" class="bg-black text-xs p-1 rounded border border-gray-700 w-24">
-                        <button onclick="updateStaff(1)" class="bg-cyan-600 text-black px-3 py-1 rounded text-xs font-bold">GÜNCELLE</button>
+
+    <div class="main-layout" id="mainApp">
+        <div class="flex flex-col h-full overflow-hidden">
+            <header class="p-4 border-b border-gray-800 flex justify-between items-center bg-black">
+                <div class="text-2xl font-bold" style="font-family:'Audiowide'">TCFH<span class="text-cyan-400">/SOFT</span></div>
+                <div class="hidden lg:flex gap-4">
+                    <button class="text-cyan-400 font-bold" onclick="showView('masalar')">MASALAR</button>
+                    <button class="text-gray-500 hover:text-white" onclick="showView('mutfak')">MUTFAK</button>
+                    <button class="text-gray-500 hover:text-white" onclick="showView('yonetim')">YÖNETİM</button>
+                </div>
+                <button onclick="location.reload()" class="text-red-500"><i class="fas fa-power-off"></i></button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-4">
+                <div id="view-masalar" class="view-content">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4" id="masaGrid">
+                        </div>
+                </div>
+
+                <div id="view-yonetim" class="view-content hidden">
+                    <h2 class="text-2xl font-bold text-cyan-400 mb-6">PERSONEL VE YETKİ KONTROLÜ</h2>
+                    <div class="space-y-4" id="personelListesi">
+                        <div class="bg-gray-900 p-4 rounded-xl flex flex-wrap justify-between items-center gap-4 border border-gray-800">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="text-[10px] text-gray-500">PERSONEL ADI</label>
+                                <input type="text" value="Garson Ali" class="w-full bg-transparent border-none text-lg font-bold p-0">
+                            </div>
+                            <div class="w-32">
+                                <label class="text-[10px] text-gray-500">YETKİ</label>
+                                <select class="w-full bg-black text-xs p-1">
+                                    <option>Garson</option><option>Mutfak</option><option>Admin</option>
+                                </select>
+                            </div>
+                            <div class="w-32">
+                                <label class="text-[10px] text-gray-500">ŞİFRE</label>
+                                <input type="password" placeholder="****" class="w-full bg-black text-xs p-1">
+                            </div>
+                            <button class="bg-cyan-600 text-black px-4 py-2 rounded font-bold text-xs">GÜNCELLE</button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
+
+        <aside class="sidebar-right p-6">
+            <h3 class="text-xl font-bold mb-4 border-b border-gray-800 pb-2">MASA DETAYI</h3>
+            <div id="sideDetail" class="flex-1 overflow-y-auto">
+                <p class="text-gray-600 text-center mt-20">İşlem yapmak için bir masa seçin.</p>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-800">
+                <div class="flex justify-between text-2xl font-bold mb-4">
+                    <span>TOPLAM:</span> <span class="text-green-400">₺0.00</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="btn-action bg-green-600 text-black">NAKİT</button>
+                    <button class="btn-action bg-blue-600 text-white">KART</button>
+                </div>
+            </div>
+        </aside>
     </div>
 
+    <nav class="mobile-nav">
+        <button class="flex-1 flex flex-col items-center justify-center text-cyan-400" onclick="showView('masalar')">
+            <i class="fas fa-couch"></i><span class="text-[10px]">MASALAR</span>
+        </button>
+        <button class="flex-1 flex flex-col items-center justify-center text-gray-500" onclick="showView('mutfak')">
+            <i class="fas fa-utensils"></i><span class="text-[10px]">MUTFAK</span>
+        </button>
+        <button class="flex-1 flex flex-col items-center justify-center text-gray-500" onclick="showView('yonetim')">
+            <i class="fas fa-users-cog"></i><span class="text-[10px]">YÖNETİM</span>
+        </button>
+    </nav>
+
     <script>
-        // PWA Kurulumu
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
+        // PWA Kaydı
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }
 
-        // PERSONEL GÜNCELLEME (Python API'ye gönderir)
-        async function updateStaff(userId) {
-            const newName = document.getElementById(`editName_${userId}`).value;
-            const newPass = document.getElementById(`editPass_${userId}`).value;
-
-            const res = await fetch('/api/personel-guncelle', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ userId, newName, newPass })
-            });
+        // Sekme Değiştirme (Sayfalar Üst Üste Binmez)
+        function showView(viewId) {
+            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-' + viewId).classList.remove('hidden');
             
-            if(res.ok) {
-                alert("Personel bilgileri ve şifresi başarıyla güncellendi!");
-            }
+            // Aktif buton rengini değiştir
+            document.querySelectorAll('.mobile-nav button, .lg\\:flex button').forEach(b => {
+                b.classList.remove('text-cyan-400');
+                b.classList.add('text-gray-500');
+            });
         }
     </script>
 </body>
