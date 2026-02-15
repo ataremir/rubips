@@ -188,6 +188,45 @@
 
         function logout() { location.reload(); }
         function yeniPersonelEkle() { alert("Yeni personel ekleme ekranı açılacak..."); }
+        // YENİ PERSONEL EKLEME FONKSİYONU
+async function sistemePersonelEkle() {
+    const isim = prompt("Yeni Personel Adı:");
+    const rol = prompt("Rolü (admin/garson):").toLowerCase();
+    const sifre = prompt("Şifresi:");
+
+    if(isim && rol && sifre) {
+        const res = await fetch('/api/personel-ekle', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ isim, rol, sifre })
+        });
+        
+        if(res.ok) {
+            alert("Personel Eklendi!");
+            location.reload(); // Listeyi yenilemek için sayfayı yeniler
+        }
+    }
+}
+
+// PERSONEL GÜNCELLEME FONKSİYONU
+async function personelGuncelle(id) {
+    // HTML'deki inputlardan veriyi al
+    const yeniIsim = document.getElementById('p_name_' + id).value;
+    const yeniSifre = document.getElementById('p_pass_' + id).value;
+    
+    // Python'a gönder
+    const res = await fetch('/api/personel-guncelle', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ id: id, isim: yeniIsim, sifre: yeniSifre, rol: 'garson' }) // Rolü şimdilik sabit veya inputtan alabilirsin
+    });
+
+    if(res.ok) {
+        alert("Bilgiler Güncellendi!");
+    } else {
+        alert("Hata oluştu!");
+    }
+}
     </script>
 </body>
 </html>
