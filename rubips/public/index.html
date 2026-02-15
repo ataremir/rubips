@@ -2,93 +2,101 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>RUBI PS | Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUBI PS | MANAGEMENT</title>
     <style>
-        :root { --neon: #00f2ff; --bg: #0a0a0a; --danger: #ff4d4d; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; text-align: center; }
-        .header { border-bottom: 2px solid var(--neon); padding: 20px; text-shadow: 0 0 10px var(--neon); }
+        body { background: #050505; color: #fff; font-family: 'Orbitron', sans-serif; margin: 0; }
+        .navbar { background: #111; padding: 15px; border-bottom: 2px solid #00f2ff; box-shadow: 0 0 15px #00f2ff; text-align: center; }
+        .container { padding: 20px; }
         
-        .admin-controls { background: #1a1a1a; padding: 20px; margin: 20px; border-radius: 10px; border: 1px solid #333; }
-        input { padding: 10px; border-radius: 5px; border: 1px solid var(--neon); background: #000; color: white; }
-        button { padding: 10px 20px; cursor: pointer; background: var(--neon); border: none; font-weight: bold; border-radius: 5px; }
-
-        .masa-konteynir { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 30px; background: #1a1a1a; padding: 15px; border-radius: 10px; }
         
-        .masa-kart { 
-            background: #111; border: 2px solid #333; padding: 20px; border-radius: 15px;
-            transition: 0.3s; position: relative;
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        
+        .card { 
+            background: linear-gradient(145deg, #111, #1a1a1a);
+            border: 1px solid #333; border-radius: 15px; padding: 20px;
+            text-align: center; transition: 0.4s;
         }
-        .masa-kart.dolu { border-color: var(--danger); box-shadow: 0 0 15px var(--danger); }
-        .masa-kart.bos { border-color: #2ecc71; }
+        .card.dolu { border-color: #ff0055; box-shadow: 0 0 20px #ff0055; }
+        .card.bos { border-color: #00ff88; }
 
-        .sure { font-size: 24px; font-weight: bold; margin: 10px 0; }
-        .btn-kapat { background: var(--danger); margin-top: 10px; }
-        .btn-sil { position: absolute; top: 5px; right: 5px; background: none; color: #555; font-size: 12px; }
+        .time-display { font-size: 35px; margin: 15px 0; font-weight: bold; color: #00f2ff; }
+        
+        button { 
+            width: 100%; padding: 12px; border: none; border-radius: 8px; 
+            font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .btn-open { background: #00ff88; color: #000; }
+        .btn-close { background: #ff0055; color: #fff; }
+        .add-area { margin-top: 20px; text-align: center; }
+        input { padding: 10px; border-radius: 5px; background: #222; color: #fff; border: 1px solid #444; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>RUBI PS YÖNETİM PANELİ</h1>
-    </div>
-
-    <div class="admin-controls">
-        <input type="number" id="masaNo" placeholder="Masa No (Örn: 5)">
-        <button onclick="masaEkle()">YENİ MASA EKLE</button>
-    </div>
-
-    <div id="masalar" class="masa-konteynir">
+    <div class="navbar"><h1>RUBI PS ADMIN</h1></div>
+    <div class="container">
+        <div class="grid" id="masaListesi"></div>
+        <div class="add-area">
+            <input type="number" id="yeniMasaNo" placeholder="Masa No">
+            <button onclick="masaEkle()" style="width: auto; background: #00f2ff;">+ MASA EKLE</button>
         </div>
+    </div>
 
     <script>
-        const API_URL = ""; // Railway üzerinde boş bırakırsak kendi adresini kullanır
-
-        async function masalariGetir() {
+        async function verileriYukle() {
             const res = await fetch('/api/masalar');
-            const masalar = await res.json();
-            const liste = document.getElementById('masalar');
+            const data = await res.json();
+            const liste = document.getElementById('masaListesi');
             liste.innerHTML = '';
 
-            masalar.forEach(masa => {
-                const div = document.createElement('div');
-                div.className = `masa-kart ${masa.durum === 'dolu' ? 'dolu' : 'bos'}`;
-                div.innerHTML = `
-                    <button class="btn-sil" onclick="masaSil(${masa.id})">X</button>
-                    <h3>MASA ${masa.id}</h3>
-                    <div class="sure">${masa.kalan_sure || '00:00'}</div>
-                    <p>Durum: ${masa.durum.toUpperCase()}</p>
-                    ${masa.durum === 'bos' 
-                        ? `<button onclick="masayiAc(${masa.id})">MASAYI AÇ (1 SAAT)</button>` 
-                        : `<button class="btn-kapat" onclick="masayiKapat(${masa.id})">HESABI KES</button>`
+            data.forEach(m => {
+                const card = document.createElement('div');
+                card.className = `card ${m.durum}`;
+                card.innerHTML = `
+                    <h2 style="margin:0">MASA ${m.id}</h2>
+                    <div class="time-display">${m.durum === 'dolu' ? m.kalan_dakika + ' dk' : 'KAPALI'}</div>
+                    ${m.durum === 'bos' 
+                        ? `<button class="btn-open" onclick="masaAc(${m.id})">SÜRE BAŞLAT (60 DK)</button>`
+                        : `<button class="btn-close" onclick="masaKapat(${m.id})">MASAYI KAPAT / HESAP</button>`
                     }
                 `;
-                liste.appendChild(div);
+                liste.appendChild(card);
             });
         }
 
+        async function masaAc(id) {
+            await fetch('/api/masa-ac', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id })
+            });
+            verileriYukle();
+        }
+
+        async function masaKapat(id) {
+            if(confirm('Masa ' + id + ' hesabı kapatılsın mı?')) {
+                await fetch('/api/masa-kapat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id })
+                });
+                verileriYukle();
+            }
+        }
+
         async function masaEkle() {
-            const id = document.getElementById('masaNo').value;
-            if(!id) return;
+            const id = document.getElementById('yeniMasaNo').value;
             await fetch('/api/masa-ekle', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id })
             });
-            masalariGetir();
+            verileriYukle();
         }
 
-        async function masaSil(id) {
-            if(!confirm('Masayı silmek istediğine emin misin?')) return;
-            await fetch(`/api/masa-sil/${id}`, { method: 'DELETE' });
-            masalariGetir();
-        }
-
-        // Şimdilik sadece ekranı güncelliyoruz, bir sonraki adımda server'a bağlayacağız
-        function masayiAc(id) { alert('Masa ' + id + ' açılıyor... Birazdan süreyi bağlayacağız.'); }
-        function masayiKapat(id) { alert('Masa ' + id + ' kapatılıyor...'); }
-
-        masalariGetir();
-        setInterval(masalariGetir, 5000); // 5 saniyede bir güncelle
+        setInterval(verileriYukle, 5000);
+        verileriYukle();
     </script>
 </body>
 </html>
