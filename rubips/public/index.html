@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>RUBI PS - YÖNETÝM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background-color: #050510; color: white; font-family: sans-serif; }
+        .neon-card { background: rgba(255,255,255,0.05); border: 1px solid #00f3ff; border-radius: 15px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="p-8">
+
+    <div class="flex justify-between items-center mb-10">
+        <h1 class="text-4xl font-bold text-cyan-400">RUBI PS SÝSTEMÝ</h1>
+        <div id="clock" class="text-2xl font-mono text-gray-500">00:00</div>
+    </div>
+
+    <div class="neon-card p-6 mb-10 border-dashed border-cyan-500/50">
+        <h2 class="text-xl font-bold mb-4 text-purple-400">Dükkan Ayarlarý (Masa Ekle/Sil)</h2>
+        <div class="flex gap-4">
+            <input type="number" id="newTableId" placeholder="Masa Numarasý" class="bg-black border border-gray-700 p-3 rounded-xl w-40 text-white">
+            <button onclick="addTable()" class="bg-cyan-600 px-8 py-3 rounded-xl font-bold hover:bg-cyan-500 transition">
+                <i class="fas fa-plus mr-2"></i> YENÝ MASA EKLE
+            </button>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">* Buradan eklediðin her masa anýnda veritabanýna kaydedilir.</p>
+    </div>
+
+    <div id="tableContainer" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        </div>
+
+    <script>
+        // --- 1. VERÝTABANINDAN MASALARI ÇEKME ---
+        async function getTables() {
+            const response = await fetch('/api/masalar');
+            const tables = await response.json();
+            
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = ''; // Önce temizle
+
+            tables.forEach(t => {
+                container.innerHTML += `
+                    <div class="neon-card p-6 relative group">
+                        <button onclick="deleteTable(${t.id})" class="absolute -top-2 -right-2 bg-red-600 w-8 h-8 rounded-full text-xs hover:scale-110 transition">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <h3 class="text-2xl font-bold">Masa ${t.id}</h3>
+                        <div class="text-sm text-gray-500 mt-2 uppercase">${t.durum}</div>
+                        <div class="mt-4 text-cyan-400 font-bold text-xl">?0.00</div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- 2. YENÝ MASA EKLEME FONKSÝYONU ---
+        async function addTable() {
+            const id = document.getElementById('newTableId').value;
+            if(!id) return alert("Lütfen bir numara girin!");
+
+            const response = await fetch('/api/masa-ekle', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id: id })
+            });
+
+            const result = await response.json();
+            alert(result.mesaj || result.hata);
+            document.getElementById('newTableId').value = '';
+            getTables(); // Listeyi güncelle
+        }
+
+        // --- 3. MASA SÝLME FONKSÝYONU ---
+        async function deleteTable(id) {
+            if(!confirm("Masa " + id + " dükkandan silinecek. Emin misin?")) return;
+
+            await fetch('/api/masa-sil/' + id, { method: 'DELETE' });
+            getTables(); // Listeyi güncelle
+        }
+
+        // Saat ve Baþlangýç
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }, 1000);
+
+        // Sayfa açýldýðýnda masalarý getir
+        getTables();
+    </script>
+</body>
+</html>
