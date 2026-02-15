@@ -3,360 +3,839 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TCFH/SOFT V3.1 - STABIL</title>
+    <title>TCFH/SOFT V4.0 - ENTERPRISE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Audiowide&display=swap" rel="stylesheet">
     
     <style>
-        :root { --neon: #00f2ff; --pink: #ff0055; --bg: #050508; --panel: #0f0f16; }
-        * { margin:0; padding:0; box-sizing: border-box; }
-        body { background: var(--bg); color: #e0e0e0; font-family: 'Rajdhani', sans-serif; height: 100vh; overflow: hidden; }
+        /* === TEMA VE GÖRSEL AYARLAR === */
+        :root { 
+            --neon-blue: #00f2ff; 
+            --neon-pink: #ff0055; 
+            --neon-green: #00ff9d;
+            --bg-dark: #050508; 
+            --panel-bg: #0f0f16; 
+        }
+        
+        * { box-sizing: border-box; }
+        body { 
+            background: var(--bg-dark); 
+            color: #e0e0e0; 
+            font-family: 'Rajdhani', sans-serif; 
+            height: 100vh; 
+            overflow: hidden; /* Sayfa kaymasını engeller */
+        }
 
-        /* KATMANLAR (Üst Üste Binmeyi Önler) */
-        #loginScreen { z-index: 9999; }
-        .modal-overlay { z-index: 8000; }
-        #toast-container { z-index: 99999; }
+        /* KATMAN YÖNETİMİ (Z-INDEX) - Sayfaların karışmasını önler */
+        .layer-base { z-index: 10; }      /* Ana Ekran */
+        .layer-modal { z-index: 50; }     /* Pencereler */
+        .layer-login { z-index: 100; }    /* Giriş Ekranı */
+        .layer-toast { z-index: 200; }    /* Bildirimler */
 
-        .app-container { display: none; height: 100vh; flex-direction: column; }
-        .app-container.active { display: flex; }
+        /* GİZLEME / GÖSTERME (Kesin çözüm) */
+        .view-section { display: none; height: 100%; overflow-y: auto; padding-bottom: 50px; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease; }
+        .hidden-force { display: none !important; }
 
-        header { background: #0a0a10; border-bottom: 1px solid #222; padding: 10px 20px; flex-shrink: 0; }
-        main { flex-grow: 1; overflow-y: auto; padding: 20px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .tab-btn { padding: 8px 15px; cursor: pointer; color: #666; font-weight: bold; border-radius: 6px; transition: 0.3s; }
-        .tab-btn.active { background: var(--neon); color: black; box-shadow: 0 0 15px var(--neon); }
+        /* GİRİŞ EKRANI */
+        #loginScreen { position: fixed; inset: 0; background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%); display: flex; align-items: center; justify-content: center; }
+        .login-card { background: rgba(15,15,25,0.95); border: 2px solid var(--neon-blue); padding: 50px; border-radius: 20px; width: 450px; text-align: center; box-shadow: 0 0 80px rgba(0,242,255,0.15); }
+
+        /* HEADER & TABS */
+        header { background: #0a0a12; border-bottom: 1px solid #333; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+        .tab-btn { padding: 10px 20px; border-radius: 8px; color: #666; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .tab-btn:hover { color: white; background: #222; }
+        .tab-btn.active { background: var(--neon-blue); color: black; box-shadow: 0 0 20px rgba(0,242,255,0.4); }
 
         /* MASA KARTLARI */
-        .masa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .card { background: var(--panel); border: 1px solid #222; border-radius: 12px; padding: 15px; cursor: pointer; position: relative; }
-        .card.ps { border-top: 4px solid var(--neon); }
-        .card.kafe { border-top: 4px solid var(--pink); }
-        .card.dolu { background: rgba(255, 0, 85, 0.05); border-color: var(--pink); }
-        .card.paused { border-color: #ffaa00; opacity: 0.7; }
-
-        /* MODAL */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-overlay.open { display: flex; }
-        .modal-box { background: #0d0d12; border: 1px solid #333; padding: 25px; border-radius: 15px; width: 750px; max-width: 95%; max-height: 90vh; overflow-y: auto; }
-
-        input, select, textarea { background: #1a1a24; border: 1px solid #333; padding: 10px; width: 100%; color: white; border-radius: 6px; margin-bottom: 10px; outline: none; }
-        .btn { padding: 10px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-blue { background: var(--neon); color: black; }
-        .btn-pink { background: var(--pink); color: white; }
-        .btn-green { background: #00ff9d; color: black; }
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; padding: 20px; }
+        .card { background: var(--panel-bg); border: 1px solid #222; border-radius: 15px; padding: 20px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .card:hover { border-color: var(--neon-blue); transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .card.ps { border-top: 4px solid var(--neon-blue); }
+        .card.kafe { border-top: 4px solid var(--neon-pink); }
+        .card.dolu { background: linear-gradient(180deg, rgba(255,0,85,0.1) 0%, rgba(0,0,0,0) 100%); border-color: var(--neon-pink); }
+        .card.paused { border-color: #ffaa00; opacity: 0.8; }
         
-        .hidden-view { display: none !important; }
-        .admin-only { display: none; } /* JS ile açılacak */
+        /* MODAL (PENCERE) */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-overlay.open { display: flex; }
+        .modal-box { background: #0e0e15; border: 1px solid #333; padding: 30px; border-radius: 15px; width: 900px; max-width: 95%; max-height: 95vh; overflow-y: auto; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+
+        /* FORM ELEMANLARI */
+        input, select, textarea { background: #151520; border: 1px solid #333; color: white; padding: 12px; width: 100%; border-radius: 8px; margin-bottom: 10px; outline: none; font-size: 16px; }
+        input:focus { border-color: var(--neon-blue); }
+        
+        .btn { width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-blue { background: var(--neon-blue); color: black; }
+        .btn-green { background: var(--neon-green); color: black; }
+        .btn-red { background: var(--neon-pink); color: white; }
+        .btn-dark { background: #222; color: #ccc; border: 1px solid #444; }
+        .btn:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
 </head>
 <body>
 
-    <div id="loginScreen" class="fixed inset-0 bg-black flex items-center justify-center">
-        <div class="bg-gray-900 p-10 rounded-2xl border-2 border-cyan-500 w-80 text-center">
-            <h1 class="text-4xl font-bold text-cyan-400 mb-6" style="font-family:'Audiowide'">TCFH/SOFT</h1>
-            <select id="loginUser" class="mb-4 bg-black"></select>
-            <input type="password" id="loginPass" placeholder="ŞİFRE" class="text-center text-xl bg-black border-cyan-900" onkeypress="if(event.key==='Enter') login()">
-            <button onclick="login()" class="btn btn-blue w-full">GİRİŞ</button>
+    <div id="loginScreen" class="layer-login">
+        <div class="login-card">
+            <h1 class="text-5xl font-bold text-cyan-400 mb-2" style="font-family:'Audiowide'">TCFH/SOFT</h1>
+            <p class="text-gray-500 text-sm mb-8 tracking-[5px]">ENTERPRISE V4.0</p>
+            
+            <div class="mb-4 text-left">
+                <label class="text-xs text-gray-500 ml-1">KULLANICI</label>
+                <select id="loginUserSelect" class="mt-1"></select>
+            </div>
+            <div class="mb-6 text-left">
+                <label class="text-xs text-gray-500 ml-1">ŞİFRE</label>
+                <input type="password" id="loginPass" class="text-center text-xl tracking-widest mt-1" onkeypress="if(event.key==='Enter') login()">
+            </div>
+            
+            <button onclick="login()" class="btn btn-blue text-lg h-14 shadow-[0_0_20px_rgba(0,242,255,0.3)]">SİSTEME GİRİŞ YAP</button>
         </div>
     </div>
 
-    <div id="app" class="app-container">
-        <header class="flex justify-between items-center">
-            <div class="font-bold text-xl" style="font-family:'Audiowide'">TCFH<span class="text-cyan-400">/SOFT</span></div>
-            <div class="flex gap-2">
-                <button class="tab-btn active" onclick="setTab('masalar')">MASALAR</button>
-                <button class="tab-btn" onclick="setTab('mutfak')">MUTFAK</button>
-                <button class="tab-btn" onclick="setTab('nargile')">NARGİLE</button>
-                <button class="tab-btn admin-view" onclick="setTab('muhasebe')">MUHASEBE</button>
-                <button class="tab-btn admin-view" onclick="setTab('ayarlar')">AYARLAR</button>
+    <div id="app" class="hidden-force h-full flex flex-col layer-base">
+        
+        <header>
+            <div class="flex items-center gap-4">
+                <div class="text-2xl font-bold" style="font-family:'Audiowide'">TCFH<span class="text-cyan-400">/SOFT</span></div>
+                <div id="userInfo" class="bg-gray-800 px-3 py-1 rounded text-xs font-bold text-gray-400 border border-gray-700">---</div>
             </div>
-            <button onclick="location.reload()" class="text-red-500"><i class="fas fa-power-off"></i></button>
+
+            <div class="flex gap-2">
+                <button class="tab-btn active" onclick="switchView('masalar')"><i class="fas fa-th-large"></i> MASALAR</button>
+                <button class="tab-btn" onclick="switchView('mutfak')"><i class="fas fa-utensils"></i> MUTFAK</button>
+                <button class="tab-btn" onclick="switchView('nargile')"><i class="fas fa-cloud"></i> NARGİLE</button>
+                <button class="tab-btn admin-role" onclick="switchView('stok')"><i class="fas fa-boxes"></i> STOK</button>
+                <button class="tab-btn admin-role" onclick="switchView('muhasebe')"><i class="fas fa-chart-line"></i> FİNANS</button>
+                <button class="tab-btn admin-role" onclick="switchView('ayarlar')"><i class="fas fa-cog"></i> AYARLAR</button>
+            </div>
+
+            <button onclick="logout()" class="text-red-500 hover:text-red-400 transition text-xl px-2"><i class="fas fa-power-off"></i></button>
         </header>
 
-        <main>
-            <div id="view-masalar" class="tab-content">
-                <div class="flex justify-between mb-4 admin-view">
-                    <button onclick="openModal('modalMasaEkle')" class="bg-gray-800 px-4 py-2 rounded text-xs">+ YENİ MASA</button>
-                </div>
-                <div id="masaGrid" class="masa-grid"></div>
-            </div>
-
-            <div id="view-mutfak" class="tab-content hidden-view">
-                <div id="mutfakGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-            </div>
-
-            <div id="view-nargile" class="tab-content hidden-view">
-                <div id="nargileGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-            </div>
-
-            <div id="view-muhasebe" class="tab-content hidden-view">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="statsArea"></div>
-                <div id="logList" class="bg-black p-4 rounded h-96 overflow-y-auto font-mono text-xs"></div>
-            </div>
-
-            <div id="view-ayarlar" class="tab-content hidden-view">
-                <div class="grid grid-cols-2 gap-10">
-                    <div id="urunYonetim"></div>
-                    <div id="personelYonetim"></div>
+        <main class="flex-1 overflow-hidden relative bg-black">
+            
+            <div id="view-masalar" class="view-section active">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6 admin-role">
+                        <button onclick="openModal('modalMasaEkle')" class="btn btn-dark w-auto px-6"><i class="fas fa-plus"></i> YENİ MASA OLUŞTUR</button>
+                        <div class="flex gap-4 text-xs font-bold">
+                            <span class="text-cyan-400 flex items-center gap-1"><div class="w-3 h-3 bg-cyan-900 border border-cyan-400 rounded-full"></div> PLAYSTATION</span>
+                            <span class="text-pink-500 flex items-center gap-1"><div class="w-3 h-3 bg-pink-900 border border-pink-500 rounded-full"></div> KAFE / NARGİLE</span>
+                            <span class="text-yellow-500 flex items-center gap-1"><div class="w-3 h-3 bg-yellow-900 border border-yellow-500 rounded-full"></div> DURDURULDU</span>
+                        </div>
+                    </div>
+                    <div id="masalarGrid" class="grid-layout"></div>
                 </div>
             </div>
+
+            <div id="view-mutfak" class="view-section">
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold text-orange-400 mb-4 border-b border-gray-800 pb-2">MUTFAK SİPARİŞLERİ</h2>
+                    <div id="mutfakGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+            <div id="view-nargile" class="view-section">
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold text-purple-400 mb-4 border-b border-gray-800 pb-2">NARGİLE SİPARİŞLERİ</h2>
+                    <div id="nargileGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+            <div id="view-stok" class="view-section">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-blue-400">STOK DURUMU</h2>
+                        <button onclick="openModal('modalUrunEkle')" class="btn btn-green w-auto px-6">ÜRÜN EKLE</button>
+                    </div>
+                    <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-black text-gray-500 text-xs uppercase">
+                                <tr>
+                                    <th class="p-4">Ürün Adı</th>
+                                    <th class="p-4">Kategori</th>
+                                    <th class="p-4">Fiyat</th>
+                                    <th class="p-4">Stok</th>
+                                    <th class="p-4 text-right">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stokTableBody" class="text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-muhasebe" class="view-section">
+                <div class="p-6">
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+                            <div class="text-gray-500 text-xs mb-1">GÜNLÜK CİRO</div>
+                            <div id="repCiro" class="text-3xl font-bold text-green-400">₺0.00</div>
+                        </div>
+                        <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+                            <div class="text-gray-500 text-xs mb-1">PS GELİRİ</div>
+                            <div id="repPs" class="text-3xl font-bold text-cyan-400">₺0.00</div>
+                        </div>
+                        <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+                            <div class="text-gray-500 text-xs mb-1">NET KÂR</div>
+                            <div id="repKar" class="text-3xl font-bold text-yellow-400">₺0.00</div>
+                        </div>
+                        <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+                            <div class="text-gray-500 text-xs mb-1">SİLİNEN (ONAY BEKLEYEN)</div>
+                            <div id="repSilinen" class="text-3xl font-bold text-red-500">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6 h-[500px]">
+                        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800 flex flex-col">
+                            <h3 class="font-bold text-gray-400 mb-2">İŞLEM GEÇMİŞİ (LOG)</h3>
+                            <div id="logList" class="flex-1 overflow-y-auto text-xs font-mono text-gray-500 space-y-1"></div>
+                        </div>
+                        <div class="bg-gray-900 rounded-xl p-4 border border-gray-800 flex flex-col">
+                            <h3 class="font-bold text-red-400 mb-2">HAYALET SİLME (ONAY KUTUSU)</h3>
+                            <div id="trashList" class="flex-1 overflow-y-auto space-y-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-ayarlar" class="view-section">
+                <div class="p-6 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-6 border-b border-gray-800 pb-2">SİSTEM AYARLARI</h2>
+                    
+                    <div class="bg-gray-900 p-6 rounded-xl border border-gray-800 mb-6">
+                        <h3 class="text-cyan-400 font-bold mb-4">PERSONEL YÖNETİMİ</h3>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <input id="newUserName" placeholder="Ad Soyad">
+                            <select id="newUserRole">
+                                <option value="garson">Garson</option>
+                                <option value="mutfak">Mutfak</option>
+                                <option value="nargile">Nargileci</option>
+                                <option value="admin">Yönetici</option>
+                            </select>
+                        </div>
+                        <input id="newUserPass" placeholder="Şifre" class="mb-4">
+                        <button onclick="addUser()" class="btn btn-green">PERSONEL EKLE</button>
+                        
+                        <div id="userList" class="mt-4 space-y-2"></div>
+                    </div>
+
+                    <div class="bg-gray-900 p-6 rounded-xl border border-gray-800">
+                        <h3 class="text-cyan-400 font-bold mb-4">FİYATLANDIRMA</h3>
+                        <label class="text-xs text-gray-500">PlayStation Saat Ücreti (₺)</label>
+                        <input type="number" id="settingPsRate" onchange="saveSettings()">
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
-    <div id="modalMasa" class="modal-overlay">
-        <div class="modal-box relative">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-2xl"><i class="fas fa-times"></i></button>
-            <h2 id="mmBaslik" class="text-3xl font-bold mb-4">MASA</h2>
-            
-            <div class="grid grid-cols-12 gap-4 h-[450px]">
-                <div class="col-span-4 bg-gray-900 rounded p-2 overflow-y-auto" id="mmUrunSec"></div>
-                <div class="col-span-8 flex flex-col gap-2">
-                    <div id="psPanel" class="bg-black p-3 rounded border border-cyan-900 hidden">
-                        <div class="flex justify-between items-center">
-                            <div id="mmSure" class="text-3xl font-mono font-bold text-cyan-400">00:00:00</div>
-                            <button id="btnToggle" onclick="toggleTime()" class="bg-yellow-600 px-4 py-1 rounded text-black font-bold text-xs">DURDUR</button>
+    <div id="modalMasa" class="modal-overlay layer-modal">
+        <div class="modal-box flex gap-6">
+            <div class="w-1/3 bg-black border border-gray-800 rounded-xl flex flex-col overflow-hidden">
+                <div class="p-3 bg-gray-900 border-b border-gray-800 font-bold text-center text-sm">MENÜ</div>
+                <div id="mmUrunList" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
+            </div>
+
+            <div class="w-2/3 flex flex-col">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 id="mmBaslik" class="text-4xl font-bold text-white mb-1">MASA ADI</h2>
+                        <div id="mmDurumBadge" class="inline-block bg-gray-800 px-2 py-1 rounded text-[10px] font-bold text-gray-400">BOŞ</div>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-600 hover:text-white text-2xl"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div id="mmPsControl" class="bg-gray-900 p-4 rounded-xl border border-cyan-900/30 mb-4 hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-cyan-500 font-bold mb-1">GEÇEN SÜRE</div>
+                            <div id="mmSure" class="text-4xl font-mono font-bold text-white">00:00:00</div>
+                        </div>
+                        <div class="text-right">
+                            <div id="mmZamanUcreti" class="text-xl font-bold text-cyan-400 mb-2">₺0.00</div>
+                            <button id="btnTimeToggle" onclick="toggleMasaTime()" class="bg-yellow-600 hover:bg-yellow-500 text-black px-6 py-2 rounded font-bold text-xs">DURAKLAT</button>
                         </div>
                     </div>
-                    <textarea id="mmNot" placeholder="Masa Notu..." class="h-12 text-xs resize-none" onchange="saveNote()"></textarea>
-                    <div class="flex-1 bg-gray-800 rounded p-2 overflow-y-auto" id="mmAdisyon"></div>
-                    <div class="bg-gray-900 p-3 rounded">
-                        <div class="flex justify-between text-2xl font-bold mb-2">
-                            <span>TOPLAM:</span> <span id="mmToplam">₺0.00</span>
+                </div>
+
+                <textarea id="mmNot" class="bg-gray-900 border-none text-xs resize-none h-10 mb-2 rounded p-2" placeholder="Masa notu ekle..." onchange="saveMasaNote()"></textarea>
+
+                <div id="mmAdisyon" class="flex-1 bg-gray-900 rounded-xl border border-gray-800 mb-4 overflow-y-auto p-2 space-y-1"></div>
+
+                <div class="bg-gray-800 p-4 rounded-xl">
+                    <div class="flex justify-between items-end mb-4">
+                        <div class="text-xs text-gray-400 space-y-1">
+                            <div>ÜRÜNLER: <span id="mmUrunTop" class="text-white">₺0</span></div>
+                            <div>ZAMAN: <span id="mmZamanTop" class="text-white">₺0</span></div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="openPay()" class="btn btn-green">ÖDEME AL</button>
-                            <button onclick="toggleStaff()" id="btnStaff" class="bg-gray-700 rounded text-xs">PERSONEL FİYATI</button>
+                        <div class="text-right">
+                            <div id="mmTarifeText" class="text-[10px] text-gray-500 font-bold">NORMAL TARİFE</div>
+                            <div id="mmGenelTop" class="text-4xl font-bold text-white">₺0.00</div>
                         </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="openPayment()" class="btn btn-green h-12 text-lg">ÖDEME AL / KAPAT</button>
+                        <button onclick="toggleStaffMode()" id="btnStaffMode" class="btn btn-dark text-xs">PERSONEL FİYATI</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modalPay" class="modal-overlay">
-        <div class="modal-box w-96 text-center">
-            <h3 class="text-xl font-bold mb-4">ÖDEME</h3>
-            <div class="text-4xl font-bold text-green-400 mb-4" id="pTotal">₺0.00</div>
-            <div class="flex gap-2 mb-4">
-                <div class="flex-1 bg-gray-900 p-2 rounded text-xs">Nakit: <span id="pCash">₺0</span></div>
-                <div class="flex-1 bg-gray-900 p-2 rounded text-xs">Kart: <span id="pCard">₺0</span></div>
+    <div id="modalPay" class="modal-overlay layer-modal">
+        <div class="modal-box w-[400px] text-center">
+            <h3 class="text-xl font-bold text-white mb-6">ÖDEME EKRANI</h3>
+            
+            <div class="bg-black border border-gray-800 p-6 rounded-xl mb-6">
+                <div class="text-gray-500 text-xs mb-1">TOPLAM TUTAR</div>
+                <div id="pTotal" class="text-5xl font-bold text-white mb-2">₺0.00</div>
+                <div class="flex gap-2 justify-center text-xs">
+                    <span class="text-green-500">Nakit: <span id="pCash">0</span></span>
+                    <span class="text-gray-600">|</span>
+                    <span class="text-blue-500">Kart: <span id="pCard">0</span></span>
+                </div>
             </div>
-            <input type="number" id="pInput" placeholder="Tutar Gir" class="text-center text-2xl">
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="addPay('nakit')" class="btn btn-green">NAKİT EKLE</button>
-                <button onclick="addPay('kart')" class="btn btn-blue">KART EKLE</button>
+            
+            <div class="text-right text-red-500 font-bold mb-4" id="pRem">KALAN: ₺0.00</div>
+
+            <input type="number" id="pInput" placeholder="Tutar Giriniz" class="text-center text-2xl h-16 font-bold bg-gray-900 border-gray-700">
+            
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="addPayment('nakit')" class="btn btn-green h-12">NAKİT</button>
+                <button onclick="addPayment('kart')" class="btn btn-blue h-12">KART</button>
             </div>
-            <button id="btnFinish" onclick="finishPay()" class="btn bg-gray-800 mt-4 w-full" disabled>TAMAMLA</button>
-            <button onclick="document.getElementById('modalPay').classList.remove('open')" class="text-gray-500 text-xs mt-4">İPTAL</button>
+            
+            <button id="btnCompletePay" onclick="completePayment()" class="btn bg-gray-800 text-gray-500 cursor-not-allowed" disabled>ÖDEMEYİ TAMAMLA</button>
+            <button onclick="closeModal()" class="text-gray-500 text-xs mt-4 hover:text-white">İPTAL</button>
         </div>
     </div>
 
-    <div id="modalMasaEkle" class="modal-overlay">
-        <div class="modal-box w-80">
-            <h3 class="mb-4 font-bold text-xl">Yeni Masa</h3>
-            <input id="nmAd" placeholder="Masa Adı">
+    <div id="modalMasaEkle" class="modal-overlay layer-modal">
+        <div class="modal-box w-96">
+            <h3 class="font-bold text-xl mb-4">Yeni Masa Ekle</h3>
+            <input id="nmAd" placeholder="Masa Adı (Örn: PS-5)">
             <select id="nmTur"><option value="ps">PlayStation</option><option value="kafe">Kafe/Nargile</option></select>
-            <button onclick="addMasa()" class="btn btn-green w-full">OLUŞTUR</button>
+            <button onclick="createMasa()" class="btn btn-green">OLUŞTUR</button>
+            <button onclick="closeModal()" class="btn btn-dark mt-2">İPTAL</button>
         </div>
     </div>
+
+    <div id="modalUrunEkle" class="modal-overlay layer-modal">
+        <div class="modal-box w-96">
+            <h3 class="font-bold text-xl mb-4">Yeni Ürün Ekle</h3>
+            <input id="nuAd" placeholder="Ürün Adı">
+            <select id="nuKat"><option value="mutfak">Mutfak</option><option value="nargile">Nargile</option></select>
+            <div class="grid grid-cols-2 gap-2">
+                <input id="nuFiyat" type="number" placeholder="Satış Fiyatı">
+                <input id="nuPerFiyat" type="number" placeholder="Personel Fiyatı">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <input id="nuStok" type="number" placeholder="Stok Adedi">
+                <input id="nuMal" type="number" placeholder="Maliyet">
+            </div>
+            <button onclick="createProduct()" class="btn btn-blue">KAYDET</button>
+            <button onclick="closeModal()" class="btn btn-dark mt-2">İPTAL</button>
+        </div>
+    </div>
+
 
     <script>
-        // VERİTABANI
-        const DB_KEY = 'tcfh_v31_stabil';
+        // --- SİSTEM VERİTABANI (LocalStorage) ---
+        const DB_KEY = 'tcfh_enterprise_v4';
+        
         let db = {
-            masalar: [],
-            urunler: [
-                {id: 1, ad: 'Çay', kat: 'mutfak', fiyat: 20, pFiyat: 10, mal: 2},
-                {id: 2, ad: 'Nargile', kat: 'nargile', fiyat: 300, pFiyat: 150, mal: 50}
+            tables: [],
+            products: [
+                { id: 1, name: 'Çay', cat: 'mutfak', price: 20, staffPrice: 5, stock: 500, cost: 2 },
+                { id: 2, ad: 'Nargile', cat: 'nargile', price: 300, staffPrice: 150, stock: 50, cost: 50 }
             ],
-            users: [{id: 1, name: 'Admin', role: 'admin', pass: '1907'}],
+            users: [
+                { id: 1, name: 'Admin', role: 'admin', pass: '1907' },
+                { id: 2, name: 'Mutfak', role: 'mutfak', pass: '1234' },
+                { id: 3, name: 'Garson', role: 'garson', pass: '1234' }
+            ],
+            trash: [], // Silinen sipariş onayı
             logs: [],
             stats: { ciro: 0, ps: 0, kafe: 0, kar: 0 },
             psRate: 120
         };
 
-        let curUser = null;
-        let curMasa = null;
-        let isStaff = false;
-        let pData = { nakit: 0, kart: 0 };
+        let currentUser = null;
+        let activeTable = null;
+        let isStaffMode = false;
+        let payData = { cash: 0, card: 0 };
 
+        // --- BAŞLANGIÇ ---
         window.onload = () => {
-            const saved = localStorage.getItem(DB_KEY);
-            if(saved) db = JSON.parse(saved);
-            document.getElementById('loginUser').innerHTML = db.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-            setInterval(tick, 1000);
+            if(localStorage.getItem(DB_KEY)) db = JSON.parse(localStorage.getItem(DB_KEY));
+            initLogin();
+            setInterval(tick, 1000); // Saniye başı güncelleme
         };
 
-        function save() { localStorage.setItem(DB_KEY, JSON.stringify(db)); renderMasalar(); }
+        function save() { 
+            localStorage.setItem(DB_KEY, JSON.stringify(db)); 
+            refreshUI(); 
+        }
+
+        function refreshUI() {
+            renderTables();
+            renderOrders('mutfak');
+            renderOrders('nargile');
+            renderStock();
+            renderStats();
+            if(activeTable) updateTableModal();
+        }
+
+        // --- GİRİŞ SİSTEMİ ---
+        function initLogin() {
+            const sel = document.getElementById('loginUserSelect');
+            sel.innerHTML = db.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+        }
 
         function login() {
-            const u = db.users.find(x => x.id == document.getElementById('loginUser').value);
-            if(u.pass === document.getElementById('loginPass').value) {
-                curUser = u;
+            const uid = document.getElementById('loginUserSelect').value;
+            const pass = document.getElementById('loginPass').value;
+            const user = db.users.find(u => u.id == uid);
+
+            if(user && user.pass === pass) {
+                currentUser = user;
                 document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('app').classList.add('active');
-                if(u.role === 'admin') document.querySelectorAll('.admin-view').forEach(e => e.style.display = 'block');
-                renderMasalar();
-            } else alert('Şifre Yanlış');
-        }
+                document.getElementById('app').classList.remove('hidden-force');
+                document.getElementById('userInfo').innerText = `${user.name} (${user.role.toUpperCase()})`;
+                
+                // Rol Yetkileri
+                if(user.role !== 'admin') {
+                    document.querySelectorAll('.admin-role').forEach(el => el.style.display = 'none');
+                }
 
-        function setTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden-view'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('view-' + tab).classList.remove('hidden-view');
+                switchView(user.role === 'mutfak' || user.role === 'nargile' ? user.role : 'masalar');
+                refreshUI();
+            } else {
+                alert('Hatalı Şifre!');
+            }
+        }
+        function logout() { location.reload(); }
+
+        // --- SAYFA GEÇİŞLERİ (Strict Mode) ---
+        function switchView(viewName) {
+            // Önce hepsini gizle
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // İsteneni aç
+            document.getElementById('view-' + viewName).classList.add('active');
             event.currentTarget.classList.add('active');
-            if(tab === 'mutfak') renderOrders('mutfak');
-            if(tab === 'nargile') renderOrders('nargile');
-            if(tab === 'muhasebe') renderMuhasebe();
+            
+            // Özel renderlar
+            refreshUI();
         }
 
-        function renderMasalar() {
-            const grid = document.getElementById('masaGrid');
+        // --- MASA YÖNETİMİ ---
+        function renderTables() {
+            const grid = document.getElementById('masalarGrid');
             grid.innerHTML = '';
-            db.masalar.forEach(m => {
-                const calc = calculate(m);
+            
+            db.tables.forEach(t => {
+                const calc = calculateTable(t);
                 const div = document.createElement('div');
-                div.className = `card ${m.tur} ${m.durum === 'dolu' ? 'dolu' : ''} ${m.isPaused ? 'paused' : ''}`;
+                div.className = `card ${t.type} ${t.status === 'dolu' ? 'dolu' : ''} ${t.isPaused ? 'paused' : ''}`;
+                
+                // Badge Durumu
+                let badge = '';
+                if(t.isPaused) badge = '<span class="text-yellow-500 text-xs">● DURDU</span>';
+                else if(t.status === 'dolu') badge = '<span class="text-green-500 text-xs">● AÇIK</span>';
+                
                 div.innerHTML = `
-                    <div class="flex justify-between font-bold"><span>${m.ad}</span><i class="fas ${m.tur==='ps'?'fa-gamepad':'fa-coffee'} opacity-30"></i></div>
-                    <div class="text-center mt-4">
-                        <div class="text-xl font-bold">₺${calc.total.toFixed(2)}</div>
-                        <div class="text-[10px] text-cyan-500 font-mono">${m.tur==='ps' ? (m.isPaused?'DURDU':calc.timeStr) : ''}</div>
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-bold text-lg">${t.name}</span>
+                        ${badge}
                     </div>
+                    <div class="text-center mt-4">
+                        <div class="text-3xl font-bold text-white">₺${calc.total.toFixed(2)}</div>
+                        <div class="text-xs text-cyan-500 font-mono mt-1">${t.type==='ps' ? calc.timeStr : ''}</div>
+                    </div>
+                    ${t.orders.some(o => o.status !== 'hazir') ? '<div class="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>' : ''}
                 `;
-                div.onclick = () => openMasa(m.id);
+                div.onclick = () => openTableModal(t.id);
                 grid.appendChild(div);
             });
         }
 
-        function calculate(m, useStaff = false) {
-            let tSec = m.accTime || 0;
-            if(m.tur === 'ps' && m.start && !m.isPaused) tSec += (Date.now() - m.start) / 1000;
-            const tCost = (db.psRate / 3600) * tSec;
-            const pCost = m.orders.reduce((a, b) => {
-                const u = db.urunler.find(x => x.ad === b.ad);
-                return a + (useStaff ? u.pFiyat : b.fiyat);
+        function calculateTable(t, staffMode = false) {
+            let timeCost = 0, timeStr = "00:00:00";
+            
+            // Zaman Hesabı
+            let seconds = t.accTime || 0;
+            if(t.type === 'ps' && t.startTime && !t.isPaused) {
+                seconds += (Date.now() - t.startTime) / 1000;
+            }
+            
+            const rate = staffMode ? (db.psRate / 2) : db.psRate; // Personel ise %50 indirimli saat
+            timeCost = (rate / 3600) * seconds;
+            
+            const h = Math.floor(seconds/3600);
+            const m = Math.floor((seconds%3600)/60);
+            const s = Math.floor(seconds%60);
+            timeStr = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+
+            // Ürün Hesabı
+            const prodCost = t.orders.reduce((acc, o) => {
+                const p = db.products.find(x => x.name === o.name) || { price: 0, staffPrice: 0 };
+                return acc + (staffMode ? p.staffPrice : p.price);
             }, 0);
-            const h = Math.floor(tSec/3600), mn = Math.floor((tSec%3600)/60), s = Math.floor(tSec%60);
-            return { total: tCost + pCost, timeStr: `${h}:${mn<10?'0'+mn:mn}:${s<10?'0'+s:s}`, tCost, pCost };
+
+            return { timeCost, prodCost, total: timeCost + prodCost, timeStr };
         }
 
-        function openMasa(id) {
-            curMasa = db.masalar.find(x => x.id === id);
-            isStaff = false;
+        function tick() {
+            // Sadece aktif görünüm masalarsa render et (performans için)
+            if(document.getElementById('view-masalar').classList.contains('active')) renderTables();
+            if(activeTable) updateTableModal();
+        }
+
+        // --- MASA DETAY MODAL ---
+        function openTableModal(id) {
+            activeTable = db.tables.find(x => x.id === id);
+            isStaffMode = false;
             document.getElementById('modalMasa').classList.add('open');
-            document.getElementById('mmBaslik').innerText = curMasa.ad;
-            document.getElementById('mmNot').value = curMasa.not || '';
-            document.getElementById('psPanel').style.display = curMasa.tur === 'ps' ? 'block' : 'none';
-            document.getElementById('btnToggle').innerText = (curMasa.isPaused || (!curMasa.start && !curMasa.accTime)) ? 'BAŞLAT' : 'DURDUR';
+            document.getElementById('mmBaslik').innerText = activeTable.name;
+            document.getElementById('mmNot').value = activeTable.note || '';
+            document.getElementById('mmPsControl').style.display = activeTable.type === 'ps' ? 'block' : 'none';
             
-            document.getElementById('mmUrunSec').innerHTML = db.urunler.map(u => `
-                <div onclick="addOrder(${u.id})" class="bg-black p-2 mb-1 rounded text-xs border border-gray-800 cursor-pointer hover:border-cyan-500">${u.ad} (₺${u.fiyat})</div>
-            `).join('');
-            updateMasaUI();
-        }
-
-        function updateMasaUI() {
-            if(!curMasa) return;
-            const c = calculate(curMasa, isStaff);
-            document.getElementById('mmSure').innerText = c.timeStr;
-            document.getElementById('mmToplam').innerText = `₺${c.total.toFixed(2)}`;
-            document.getElementById('btnStaff').className = isStaff ? 'bg-yellow-600 text-black text-xs p-1 rounded font-bold' : 'bg-gray-700 text-xs p-1 rounded';
-            
-            document.getElementById('mmAdisyon').innerHTML = curMasa.orders.map((o, i) => `
-                <div class="flex justify-between text-xs border-b border-gray-700 py-1">
-                    <span>${o.ad} (${o.status})</span>
-                    <div class="flex gap-2"><span>₺${isStaff ? db.urunler.find(x=>x.ad===o.ad).pFiyat : o.fiyat}</span><i onclick="delOrder(${i})" class="fas fa-trash text-red-900 cursor-pointer"></i></div>
+            // Ürün Listesi
+            document.getElementById('mmUrunList').innerHTML = db.products.map(p => `
+                <div onclick="addOrder(${p.id})" class="bg-gray-900 border border-gray-800 p-2 rounded cursor-pointer hover:border-cyan-500 flex justify-between items-center group">
+                    <div>
+                        <div class="font-bold text-xs text-white group-hover:text-cyan-400">${p.name}</div>
+                        <div class="text-[10px] text-gray-500">Stok: ${p.stock}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-green-400 font-bold text-xs">₺${p.price}</div>
+                        <div class="text-yellow-600 text-[10px]">₺${p.staffPrice}</div>
+                    </div>
                 </div>
             `).join('');
+            
+            updateTableModal();
         }
 
-        function tick() { renderMasalar(); if(curMasa) updateMasaUI(); }
-
-        function toggleTime() {
-            if(curMasa.isPaused || (!curMasa.start && !curMasa.accTime)) {
-                curMasa.start = Date.now();
-                curMasa.isPaused = false;
-                curMasa.durum = 'dolu';
-            } else {
-                curMasa.accTime = (curMasa.accTime || 0) + (Date.now() - curMasa.start) / 1000;
-                curMasa.start = null;
-                curMasa.isPaused = true;
+        function updateTableModal() {
+            if(!activeTable) return;
+            const c = calculateTable(activeTable, isStaffMode);
+            
+            // PS Kontrolleri
+            if(activeTable.type === 'ps') {
+                document.getElementById('mmSure').innerText = c.timeStr;
+                document.getElementById('mmZamanUcreti').innerText = `₺${c.timeCost.toFixed(2)}`;
+                
+                const btn = document.getElementById('btnTimeToggle');
+                if(activeTable.isPaused || (!activeTable.startTime && !activeTable.accTime)) {
+                    btn.innerText = "BAŞLAT";
+                    btn.className = "bg-blue-600 hover:bg-blue-500 text-black px-6 py-2 rounded font-bold text-xs";
+                } else {
+                    btn.innerText = "DURAKLAT";
+                    btn.className = "bg-yellow-600 hover:bg-yellow-500 text-black px-6 py-2 rounded font-bold text-xs animate-pulse";
+                }
             }
-            save(); openMasa(curMasa.id);
+
+            // Totaller
+            document.getElementById('mmUrunTop').innerText = `₺${c.prodCost.toFixed(2)}`;
+            document.getElementById('mmZamanTop').innerText = `₺${c.timeCost.toFixed(2)}`;
+            document.getElementById('mmGenelTop').innerText = `₺${c.total.toFixed(2)}`;
+            document.getElementById('mmTarifeText').innerText = isStaffMode ? "PERSONEL TARİFESİ AKTİF" : "NORMAL TARİFE";
+            document.getElementById('mmTarifeText').className = isStaffMode ? "text-xs font-bold text-yellow-500 blink" : "text-[10px] text-gray-500 font-bold";
+            
+            // Adisyon
+            document.getElementById('mmAdisyon').innerHTML = activeTable.orders.map((o, i) => {
+                const p = db.products.find(x => x.name === o.name);
+                const priceShow = isStaffMode ? p.staffPrice : p.price;
+                return `
+                    <div class="flex justify-between items-center border-b border-gray-800 py-2 text-sm hover:bg-gray-800 px-2 rounded">
+                        <div>
+                            <span class="text-white font-bold">${o.name}</span>
+                            <span class="text-[10px] ml-2 px-1 rounded ${o.status==='hazir'?'bg-green-900 text-green-400':'bg-yellow-900 text-yellow-400'}">${o.status.toUpperCase()}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="${isStaffMode?'text-yellow-500':'text-gray-300'} font-mono">₺${priceShow}</span>
+                            <button onclick="requestDeleteOrder(${i})" class="text-red-500 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function addOrder(uid) {
-            const u = db.urunler.find(x => x.id === uid);
-            curMasa.orders.push({ ad: u.ad, fiyat: u.fiyat, kat: u.kat, status: 'bekliyor' });
-            curMasa.durum = 'dolu';
-            save(); updateMasaUI();
+        // --- PS MANTIĞI ---
+        function toggleMasaTime() {
+            if(activeTable.isPaused || (!activeTable.startTime && !activeTable.accTime)) {
+                // Başlat
+                activeTable.startTime = Date.now();
+                activeTable.isPaused = false;
+                activeTable.status = 'dolu';
+            } else {
+                // Durdur
+                activeTable.accTime = (activeTable.accTime || 0) + (Date.now() - activeTable.startTime) / 1000;
+                activeTable.startTime = null;
+                activeTable.isPaused = true;
+            }
+            save(); updateTableModal();
         }
-        function delOrder(i) { curMasa.orders.splice(i, 1); save(); updateMasaUI(); }
-        function saveNote() { curMasa.not = document.getElementById('mmNot').value; save(); }
-        function toggleStaff() { isStaff = !isStaff; updateMasaUI(); }
 
-        function openPay() {
-            const c = calculate(curMasa, isStaff);
-            pData = { nakit: 0, kart: 0 };
+        // --- SİPARİŞ & STOK ---
+        function addOrder(pid) {
+            const p = db.products.find(x => x.id === pid);
+            if(p.stock <= 0) return alert('YETERSİZ STOK!');
+            
+            // Stok düşme işlemi ödeme anında değil, sipariş anında olmalı ki başkası alamasın
+            // Ancak iptal edilirse geri eklemeliyiz.
+            p.stock--;
+            
+            activeTable.orders.push({
+                id: Date.now(),
+                name: p.name,
+                cat: p.cat,
+                status: 'bekliyor'
+            });
+            activeTable.status = 'dolu';
+            
+            // Otomatik PS başlatma
+            if(activeTable.type === 'ps' && !activeTable.startTime && !activeTable.accTime) toggleMasaTime();
+            
+            save(); updateTableModal();
+        }
+
+        function requestDeleteOrder(idx) {
+            // HAYALET SİLME: Garson silerse Admin'e düşer
+            if(currentUser.role === 'admin') {
+                // Admin direkt siler, stoğu geri verir
+                const o = activeTable.orders[idx];
+                const p = db.products.find(x => x.name === o.name);
+                if(p) p.stock++;
+                activeTable.orders.splice(idx, 1);
+            } else {
+                // Garson silerse
+                const o = activeTable.orders[idx];
+                db.trash.push({
+                    tableId: activeTable.id,
+                    tableName: activeTable.name,
+                    order: o,
+                    staff: currentUser.name,
+                    time: new Date().toLocaleTimeString()
+                });
+                activeTable.orders.splice(idx, 1); // Masadan kalkar ama stok dönmez (onay lazım)
+                alert('Ürün silindi (Admin onayına gönderildi)');
+            }
+            save(); updateTableModal();
+        }
+
+        // --- ÖDEME ---
+        function openPayment() {
+            const c = calculateTable(activeTable, isStaffMode);
+            if(c.total <= 0) return alert('Ödenecek tutar yok!');
+            
+            payData = { cash: 0, card: 0 };
             document.getElementById('modalPay').classList.add('open');
             document.getElementById('pTotal').innerText = `₺${c.total.toFixed(2)}`;
             updatePayUI(c.total);
         }
 
-        function addPay(t) {
-            const val = parseFloat(document.getElementById('pInput').value) || 0;
-            pData[t] += val;
+        function addPayment(type) {
+            const val = parseFloat(document.getElementById('pInput').value);
+            if(!val) return;
+            payData[type] += val;
             document.getElementById('pInput').value = '';
-            updatePayUI(calculate(curMasa, isStaff).total);
+            updatePayUI(calculateTable(activeTable, isStaffMode).total);
         }
 
         function updatePayUI(total) {
-            const paid = pData.nakit + pData.kart;
+            const paid = payData.cash + payData.card;
             const rem = Math.max(0, total - paid);
-            document.getElementById('pCash').innerText = `₺${pData.nakit}`;
-            document.getElementById('pCard').innerText = `₺${pData.kart}`;
-            document.getElementById('btnFinish').disabled = rem > 0.5;
-            document.getElementById('btnFinish').className = rem <= 0.5 ? 'btn btn-green w-full' : 'btn bg-gray-800 w-full';
+            document.getElementById('pCash').innerText = `₺${payData.cash}`;
+            document.getElementById('pCard').innerText = `₺${payData.card}`;
+            document.getElementById('pRem').innerText = `KALAN: ₺${rem.toFixed(2)}`;
+            
+            const btn = document.getElementById('btnCompletePay');
+            if(rem <= 0.5) {
+                btn.disabled = false;
+                btn.className = "btn btn-green h-14 text-xl animate-pulse";
+                btn.innerText = "ÖDEMEYİ TAMAMLA";
+            } else {
+                btn.disabled = true;
+                btn.className = "btn bg-gray-800 text-gray-500 cursor-not-allowed";
+                btn.innerText = "BAKİYE KALDI";
+            }
         }
 
-        function finishPay() {
-            const c = calculate(curMasa, isStaff);
+        function completePayment() {
+            const c = calculateTable(activeTable, isStaffMode);
+            
+            // Kar Hesabı
+            let costTotal = 0;
+            activeTable.orders.forEach(o => {
+                const p = db.products.find(x => x.name === o.name);
+                if(p) costTotal += p.cost;
+            });
+            const profit = c.total - costTotal;
+
+            // Stats Update
             db.stats.ciro += c.total;
-            if(curMasa.tur==='ps') db.stats.ps += c.total; else db.stats.kafe += c.total;
-            db.logs.unshift(`[${new Date().toLocaleTimeString()}] ${curMasa.ad} - ₺${c.total.toFixed(2)}`);
-            curMasa.durum = 'bos'; curMasa.start = null; curMasa.accTime = 0; curMasa.orders = []; curMasa.isPaused = false;
-            save(); document.getElementById('modalPay').classList.remove('open'); closeModal();
+            db.stats.kar += profit;
+            if(activeTable.type === 'ps') db.stats.ps += c.total; else db.stats.kafe += c.total;
+
+            // Log
+            db.logs.unshift(`[${new Date().toLocaleTimeString()}] ${activeTable.name} KAPATILDI | TUTAR: ₺${c.total.toFixed(2)} | ${isStaffMode?'PERSONEL':'NORMAL'}`);
+
+            // Masayı Sıfırla
+            activeTable.status = 'bos';
+            activeTable.startTime = null;
+            activeTable.accTime = 0;
+            activeTable.isPaused = false;
+            activeTable.orders = [];
+            activeTable.note = '';
+
+            save();
+            closeModal(); // Tüm modalları kapat
         }
 
+        // --- DİĞER FONKSİYONLAR ---
         function renderOrders(cat) {
-            const grid = document.getElementById(cat+'Grid'); grid.innerHTML = '';
-            db.masalar.forEach(m => {
-                m.orders.forEach((o, i) => {
-                    if(o.kat === cat && o.status !== 'hazir') {
-                        grid.innerHTML += `
-                            <div class="bg-gray-900 p-3 rounded border-l-4 border-orange-500">
-                                <div class="font-bold">${m.ad} - ${o.ad}</div>
-                                <button onclick="setReady(${m.id}, ${i})" class="btn btn-green w-full mt-2 text-xs">HAZIR</button>
+            const el = document.getElementById(cat + 'Grid');
+            if(!el) return;
+            el.innerHTML = '';
+            
+            db.tables.forEach(t => {
+                t.orders.forEach((o, i) => {
+                    if(o.cat === cat && o.status !== 'hazir') {
+                        el.innerHTML += `
+                            <div class="bg-gray-900 border-l-4 ${cat==='mutfak'?'border-orange-500':'border-purple-500'} p-4 rounded mb-2">
+                                <div class="flex justify-between font-bold text-white mb-2">
+                                    <span>${t.name}</span>
+                                    <span class="text-xs text-gray-500">${new Date(o.id).toLocaleTimeString().slice(0,5)}</span>
+                                </div>
+                                <div class="text-xl mb-3">${o.name}</div>
+                                ${currentUser.role === cat || currentUser.role === 'admin' ? 
+                                  `<button onclick="setReady(${t.id}, ${i})" class="btn btn-green text-sm">HAZIR</button>` : 
+                                  '<div class="text-xs text-center text-gray-500 animate-pulse">HAZIRLANIYOR...</div>'}
                             </div>
                         `;
                     }
                 });
             });
         }
-        function setReady(mid, idx) {
-            const m = db.masalar.find(x => x.id === mid);
-            m.orders[idx].status = 'hazir';
-            save(); renderOrders(curUser.role === 'admin' ? 'mutfak' : curUser.role);
+        function setReady(tid, idx) {
+            const t = db.tables.find(x => x.id === tid);
+            t.orders[idx].status = 'hazir';
+            save();
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('open'); }
-        function closeModal() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); curMasa = null; }
-        function addMasa() {
-            db.masalar.push({ id: Date.now(), ad: document.getElementById('nmAd').value, tur: document.getElementById('nmTur').value, durum: 'bos', orders: [] });
+        function renderStock() {
+            document.getElementById('stokTableBody').innerHTML = db.products.map(p => `
+                <tr class="border-b border-gray-800 hover:bg-gray-900">
+                    <td class="p-4 font-bold text-white">${p.name}</td>
+                    <td class="p-4 text-gray-400 uppercase text-xs">${p.cat}</td>
+                    <td class="p-4 text-green-400">₺${p.price}</td>
+                    <td class="p-4 ${p.stock<10 ? 'text-red-500 font-bold' : 'text-blue-400'}">${p.stock}</td>
+                    <td class="p-4 text-right"><button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-white"><i class="fas fa-trash"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderStats() {
+            document.getElementById('repCiro').innerText = `₺${db.stats.ciro.toFixed(2)}`;
+            document.getElementById('repPs').innerText = `₺${db.stats.ps.toFixed(2)}`;
+            document.getElementById('repKafe').innerText = `₺${db.stats.kafe.toFixed(2)}`;
+            document.getElementById('repKar').innerText = `₺${db.stats.kar.toFixed(2)}`;
+            
+            document.getElementById('repSilinen').innerText = db.trash.length;
+            
+            document.getElementById('logList').innerHTML = db.logs.map(l => `<div class="border-b border-gray-800 py-1">${l}</div>`).join('');
+            
+            document.getElementById('trashList').innerHTML = db.trash.map((t, i) => `
+                <div class="bg-black border border-red-900 p-2 rounded text-xs flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-red-400">${t.order.name} (₺${t.order.price})</div>
+                        <div class="text-gray-500">${t.tableName} - ${t.staff}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="approveTrash(${i}, true)" class="bg-green-900 text-green-400 px-2 py-1 rounded">ONAYLA</button>
+                        <button onclick="approveTrash(${i}, false)" class="bg-gray-800 text-gray-400 px-2 py-1 rounded">GERİ AL</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function approveTrash(i, approve) {
+            const item = db.trash[i];
+            if(approve) {
+                // Stoğu geri ver
+                const p = db.products.find(x => x.name === item.order.name);
+                if(p) p.stock++; // Silinen ürün stoğa döner
+                db.logs.unshift(`[SİLME ONAYI] ${item.tableName} masasından ${item.order.name} silindi.`);
+            } else {
+                // Masaya geri yükle
+                const t = db.tables.find(x => x.id === item.tableId);
+                if(t) t.orders.push(item.order);
+            }
+            db.trash.splice(i, 1);
+            save();
+        }
+
+        // --- YARDIMCILAR (CRUD) ---
+        function createMasa() {
+            const name = document.getElementById('nmAd').value;
+            if(!name) return;
+            db.tables.push({ id: Date.now(), name, type: document.getElementById('nmTur').value, status: 'bos', orders: [] });
             save(); closeModal();
         }
+        function createProduct() {
+            const p = {
+                id: Date.now(),
+                name: document.getElementById('nuAd').value,
+                cat: document.getElementById('nuKat').value,
+                price: parseFloat(document.getElementById('nuFiyat').value),
+                staffPrice: parseFloat(document.getElementById('nuPerFiyat').value),
+                stock: parseInt(document.getElementById('nuStok').value),
+                cost: parseFloat(document.getElementById('nuMal').value)
+            };
+            db.products.push(p); save(); closeModal();
+        }
+        function addUser() {
+            db.users.push({
+                id: Date.now(),
+                name: document.getElementById('newUserName').value,
+                role: document.getElementById('newUserRole').value,
+                pass: document.getElementById('newUserPass').value
+            });
+            save(); renderStats(); // Listeyi yenilemek için
+        }
+        function deleteProduct(id) {
+            if(confirm('Ürün silinsin mi?')) {
+                db.products = db.products.filter(x => x.id !== id);
+                save();
+            }
+        }
+        
+        function openModal(id) { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open'));
+            document.getElementById(id).classList.add('open'); 
+        }
+        function closeModal() { document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open')); activeTable = null; }
+        function saveMasaNote() { activeTable.note = document.getElementById('mmNot').value; save(); }
+        function toggleStaffMode() { isStaffMode = !isStaffMode; updateTableModal(); }
+        
+        function saveSettings() { db.psRate = parseFloat(document.getElementById('settingPsRate').value); save(); }
     </script>
 </body>
 </html>
