@@ -3,168 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TCFH/SOFT V7.0</title>
+    <title>TCFH/SOFT V8.0 PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Audiowide&display=swap" rel="stylesheet">
+    
     <style>
-        body { background: #050508; color: white; overflow: hidden; font-family: sans-serif; }
-        
-        /* CİHAZ SEÇİM EKRANI */
-        #deviceSelector { position: fixed; inset: 0; background: black; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        /* PC MODU */
-        body.pc-mode #main-layout { display: grid; grid-template-columns: 1fr 400px; height: 100vh; }
-        body.pc-mode #mobile-nav { display: none; }
-        
-        /* MOBİL MODU */
-        body.mobile-mode #main-layout { display: block; height: calc(100vh - 70px); overflow-y: auto; }
-        body.mobile-mode #pc-sidebar { display: none; }
-        body.mobile-mode #mobile-nav { display: flex; }
+        :root { 
+            --neon-blue: #00f2ff; 
+            --neon-pink: #ff0055; 
+            --bg-dark: #050508; 
+            --card-bg: #0f0f16;
+        }
+        body { background: var(--bg-dark); color: white; font-family: 'Rajdhani', sans-serif; overflow: hidden; }
 
-        .card { background: #111; border: 1px solid #333; padding: 15px; border-radius: 10px; cursor: pointer; }
-        .card.active { border-color: #00f2ff; background: #001111; }
-        .ready-badge { animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        /* FİLTRE BUTONLARI */
+        .filter-btn {
+            background: #1a1a26; border: 1px solid #333; color: #888;
+            padding: 8px 16px; border-radius: 8px; font-weight: bold; transition: 0.3s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .filter-btn.active { background: var(--neon-blue); color: black; box-shadow: 0 0 15px rgba(0,242,255,0.3); border-color: var(--neon-blue); }
+        .filter-btn.active-pink { background: var(--neon-pink); color: white; box-shadow: 0 0 15px rgba(255,0,85,0.3); border-color: var(--neon-pink); }
+
+        /* MASA KARTLARI */
+        .masa-card {
+            background: var(--card-bg); border: 1px solid #222; border-radius: 12px;
+            padding: 15px; position: relative; cursor: pointer; transition: all 0.2s;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 110px;
+        }
+        .masa-card:hover { transform: translateY(-3px); }
+        
+        /* PS Tipi */
+        .masa-card.ps { border-top: 3px solid var(--neon-blue); }
+        .masa-card.ps.dolu { background: linear-gradient(180deg, rgba(0,242,255,0.05) 0%, rgba(0,0,0,0) 100%); border-color: var(--neon-blue); }
+        
+        /* Kafe Tipi */
+        .masa-card.kafe { border-top: 3px solid var(--neon-pink); }
+        .masa-card.kafe.dolu { background: linear-gradient(180deg, rgba(255,0,85,0.05) 0%, rgba(0,0,0,0) 100%); border-color: var(--neon-pink); }
+
+        /* Iconlar */
+        .icon-box { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .ps .icon-box { background: rgba(0,242,255,0.1); color: var(--neon-blue); }
+        .kafe .icon-box { background: rgba(255,0,85,0.1); color: var(--neon-pink); }
+
+        /* PC Sidebar */
+        #pc-sidebar { border-left: 2px solid #1a1a1a; background: #0a0a0f; }
+        @media(max-width: 1024px) { #pc-sidebar { display: none; } }
     </style>
 </head>
 <body>
 
-    <div id="deviceSelector">
-        <h1 class="text-4xl font-bold text-cyan-400 mb-8">TCFH/SOFT</h1>
-        <h2 class="text-gray-400 mb-4">Cihaz Türünü Seçin</h2>
-        <div class="flex gap-6">
-            <button onclick="setMode('pc')" class="bg-gray-800 p-6 rounded-xl border border-gray-600 hover:border-cyan-400">
-                <i class="fas fa-desktop text-4xl mb-2 text-white"></i>
-                <div class="text-xl">BİLGİSAYAR</div>
-            </button>
-            <button onclick="setMode('mobile')" class="bg-gray-800 p-6 rounded-xl border border-gray-600 hover:border-pink-400">
-                <i class="fas fa-mobile-alt text-4xl mb-2 text-white"></i>
-                <div class="text-xl">TELEFON</div>
-            </button>
-        </div>
-    </div>
-
-    <div id="app" class="hidden h-full flex flex-col">
-        <header class="bg-black p-4 border-b border-gray-800 flex justify-between items-center">
-            <div class="font-bold text-xl">TCFH/SOFT</div>
-            <div id="syncStatus" class="text-[10px] text-green-500">● CANLI</div>
-        </header>
-
-        <div id="main-layout">
-            <div class="p-4 overflow-y-auto">
-                <div id="readyOrdersArea" class="hidden bg-green-900/30 border border-green-500 p-3 rounded mb-4 ready-badge">
-                    <h3 class="font-bold text-green-400"><i class="fas fa-bell"></i> HAZIR SİPARİŞLER!</h3>
-                    <div id="readyList" class="text-sm mt-1"></div>
-                    <button onclick="clearReady()" class="text-[10px] underline mt-1">Temizle</button>
-                </div>
-
-                <div id="masaGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-            </div>
-
-            <div id="pc-sidebar" class="bg-[#0a0a12] border-l border-gray-800 p-4 flex flex-col">
-                <h2 id="sideTitle" class="text-2xl font-bold mb-4">MASA SEÇİN</h2>
-                <div id="sideContent" class="hidden flex-col h-full">
-                    <div id="sideOrders" class="flex-1 bg-black rounded p-2 overflow-y-auto mb-4"></div>
-                    <div class="bg-gray-900 p-4 rounded">
-                        <div class="flex justify-between text-xl font-bold mb-2">
-                            <span>TOPLAM:</span> <span id="sideTotal" class="text-green-400">₺0.00</span>
-                        </div>
-                        <button class="w-full bg-green-600 py-3 rounded font-bold text-black mb-2">ÖDEME AL</button>
-                    </div>
-                </div>
+    <div class="flex h-screen w-full">
+        <div class="flex-1 flex flex-col h-full relative">
+            
+            <header class="bg-black p-4 border-b border-gray-800 flex justify-between items-center shrink-0">
+                <div class="text-2xl font-bold tracking-wider" style="font-family:'Audiowide'">TCFH<span class="text-cyan-400">/SOFT</span></div>
                 
-                <div class="mt-4 pt-4 border-t border-gray-800">
-                    <label class="text-xs text-gray-500">PS Saat Ücreti</label>
-                    <input type="number" id="settingPs" class="bg-black border border-gray-600 text-white p-1 w-20 text-xs" onchange="saveSettings()">
+                <div class="flex gap-2">
+                    <button onclick="setFilter('all')" id="btn-all" class="filter-btn active"><i class="fas fa-layer-group"></i> HEPSİ</button>
+                    <button onclick="setFilter('ps')" id="btn-ps" class="filter-btn"><i class="fas fa-gamepad"></i> PS SALONU</button>
+                    <button onclick="setFilter('kafe')" id="btn-kafe" class="filter-btn"><i class="fas fa-coffee"></i> KAFE</button>
                 </div>
-            </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-4 bg-[#050508]">
+                <div id="masaGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    </div>
+            </main>
+
+            <nav class="lg:hidden bg-black border-t border-gray-800 h-16 flex justify-around items-center shrink-0 z-50">
+                <button class="text-cyan-400 flex flex-col items-center"><i class="fas fa-th-large"></i><span class="text-[10px]">MASALAR</span></button>
+                <button class="text-gray-500 flex flex-col items-center"><i class="fas fa-utensils"></i><span class="text-[10px]">MUTFAK</span></button>
+            </nav>
         </div>
 
-        <nav id="mobile-nav" class="hidden fixed bottom-0 w-full bg-black border-t border-gray-800 h-16 justify-around items-center">
-            <button class="text-cyan-400 flex flex-col items-center"><i class="fas fa-th"></i><span class="text-[10px]">MASALAR</span></button>
-            <button class="text-gray-500 flex flex-col items-center"><i class="fas fa-utensils"></i><span class="text-[10px]">MUTFAK</span></button>
-        </nav>
+        <div id="pc-sidebar" class="w-[400px] flex flex-col p-6">
+            <h2 id="sideTitle" class="text-2xl font-bold mb-1 text-gray-500">MASA SEÇİLMEDİ</h2>
+            <div id="sideStatus" class="text-xs text-gray-600 mb-6">---</div>
+            
+            <div class="flex-1 bg-[#111] rounded-xl border border-gray-800 mb-4 flex flex-col items-center justify-center text-gray-600">
+                <i class="fas fa-hand-pointer text-3xl mb-2"></i>
+                <p>İşlem yapmak için bir masa seçin</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        let db = {};
-        let activeTableId = null;
+        let db = { tables: [] };
+        let currentFilter = 'all';
 
-        // 1. CİHAZ SEÇİMİ
-        function setMode(mode) {
-            document.body.classList.add(mode + '-mode');
-            document.getElementById('deviceSelector').style.display = 'none';
-            document.getElementById('app').classList.remove('hidden');
-            syncData(); // Verileri çekmeye başla
-            setInterval(syncData, 2000); // Her 2 saniyede bir güncelle
-        }
+        // Sayfa Açılınca
+        window.onload = () => {
+            syncData();
+            setInterval(syncData, 3000); // 3 saniyede bir güncelle
+        };
 
-        // 2. VERİ SENKRONİZASYONU (CANLI)
         async function syncData() {
             try {
-                const res = await fetch('/api/get-all');
-                db = await res.json();
-                renderUI();
-                document.getElementById('syncStatus').style.color = '#00ff00';
-            } catch (e) {
-                document.getElementById('syncStatus').style.color = 'red';
-            }
+                const res = await fetch('/api/get-data');
+                const data = await res.json();
+                db.tables = data.tables;
+                renderMasalar();
+            } catch(e) { console.log("Veri çekilemedi"); }
         }
 
-        // 3. EKRANI ÇİZ
-        function renderUI() {
+        // FİLTRELEME VE SIRALAMA MANTIĞI
+        function setFilter(type) {
+            currentFilter = type;
+            
+            // Buton Renklerini Ayarla
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active', 'active-pink');
+                b.style.color = '#888';
+            });
+
+            if(type === 'ps') document.getElementById('btn-ps').classList.add('active');
+            else if(type === 'kafe') document.getElementById('btn-kafe').classList.add('active-pink');
+            else document.getElementById('btn-all').classList.add('active');
+
+            renderMasalar();
+        }
+
+        function renderMasalar() {
             const grid = document.getElementById('masaGrid');
             grid.innerHTML = '';
-            
-            // PS Fiyat Ayarı
-            document.getElementById('settingPs').value = db.settings.ps_rate;
 
-            db.tables.forEach(t => {
-                const div = document.createElement('div');
-                div.className = `card ${t.id === activeTableId ? 'active' : ''}`;
-                div.innerHTML = `
-                    <div class="font-bold text-lg">${t.name}</div>
-                    <div class="text-xs text-gray-500">${t.status.toUpperCase()}</div>
+            // 1. FİLTRELE
+            let filteredTables = db.tables.filter(t => {
+                if(currentFilter === 'all') return true;
+                return t.type === currentFilter;
+            });
+
+            // 2. SIRALA (Alfabetik ve Sayısal: Masa 1, Masa 2, Masa 10...)
+            filteredTables.sort((a, b) => {
+                return a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'});
+            });
+
+            // 3. ÇİZ
+            filteredTables.forEach(t => {
+                const isDolu = t.status === 'dolu';
+                const icon = t.type === 'ps' ? 'fa-gamepad' : 'fa-smoking'; // Nargile için duman ikonu
+                
+                grid.innerHTML += `
+                    <div onclick="openMasa(${t.id})" class="masa-card ${t.type} ${isDolu ? 'dolu' : ''}">
+                        <div class="flex justify-between items-start">
+                            <span class="font-bold text-lg text-white">${t.name}</span>
+                            <div class="icon-box"><i class="fas ${icon}"></i></div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            ${t.type === 'ps' ? 
+                                `<div class="text-2xl font-mono font-bold text-white tracking-widest">
+                                    ${isDolu ? '01:24' : '00:00'}
+                                </div>` 
+                                : 
+                                `<div class="text-sm font-bold ${isDolu ? 'text-green-400' : 'text-gray-500'}">
+                                    ${isDolu ? 'AÇIK - ADİSYON VAR' : 'BOŞ'}
+                                </div>`
+                            }
+                        </div>
+                    </div>
                 `;
-                div.onclick = () => selectMasa(t.id);
-                grid.appendChild(div);
             });
-
-            if(activeTableId) updateSidePanel();
-            checkReadyOrders();
         }
 
-        function selectMasa(id) {
-            activeTableId = id;
-            if (document.body.classList.contains('mobile-mode')) {
-                alert("Mobilde Detay Penceresi Açılır (Şimdilik Demo)");
+        function openMasa(id) {
+            // Sağ Paneli Doldur (Basit Demo)
+            const t = db.tables.find(x => x.id === id);
+            if(window.innerWidth >= 1024) {
+                document.getElementById('sideTitle').innerText = t.name;
+                document.getElementById('sideTitle').className = "text-3xl font-bold mb-1 text-white";
+                document.getElementById('sideStatus').innerText = t.type.toUpperCase() + " BÖLÜMÜ";
             } else {
-                updateSidePanel();
+                alert(t.name + " Mobil Modalı Açılacak");
             }
-        }
-
-        function updateSidePanel() {
-            const t = db.tables.find(x => x.id === activeTableId);
-            document.getElementById('sideTitle').innerText = t.name;
-            document.getElementById('sideContent').style.display = 'flex';
-            // Burada adisyon listesi ve toplam hesaplanacak
-        }
-
-        // 4. AYAR KAYDETME (PS FİYATI DEĞİŞMİYOR SORUNU ÇÖZÜMÜ)
-        async function saveSettings() {
-            const val = document.getElementById('settingPs').value;
-            await fetch('/api/update-settings', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ ps_rate: val })
-            });
-            alert("Fiyat Güncellendi!");
-        }
-
-        // 5. HAZIR SİPARİŞ KONTROLÜ
-        function checkReadyOrders() {
-            // Demo mantığı: Eğer sipariş durumu 'hazir' ise buraya düşer
-            // Mutfak entegrasyonu tamamlandığında burası dolacak
         }
     </script>
 </body>
