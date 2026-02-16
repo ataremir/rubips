@@ -1,60 +1,78 @@
-from flask import Flask, render_template, jsonify, request
 import os
+import json
+from flask import Flask, render_template, jsonify, request
 
 app = Flask(__name__)
 
-# Personel Veritabanı (Şimdilik RAM'de duruyor, restart atınca sıfırlanır)
-# MySQL'e geçtiğimizde burası veritabanından okunacak.
-personeller = [
-    {"id": 1, "isim": "Garson Ali", "rol": "garson", "sifre": "1234", "satis": 1450},
-    {"id": 2, "isim": "Nargileci Memo", "rol": "garson", "sifre": "1234", "satis": 850},
-    {"id": 3, "isim": "Admin", "rol": "admin", "sifre": "1907", "satis": 0}
-]
+# VERİTABANI DOSYASI
+DB_FILE = 'database.json'
+
+# Varsayılan Veriler (İlk açılışta)
+default_data = {
+    "settings": {"ps_rate": 120},
+    "tables": [{"id": i, "name": f"Masa {i}", "type": "ps", "status": "bos", "orders": [], "start_time": None} for i in range(1, 9)],
+    "staff": [
+        {"id": 1, "name": "Admin", "role": "admin", "pass": "1907"},
+        {"id": 2, "name": "Garson Ali", "role": "garson", "pass": "1234"}
+    ],
+    "products": [
+        {"id": 1, "name": "Çay", "price": 20},
+        {"id": 2, "name": "Kahve", "price": 40}
+    ]
+}
+
+# Verileri Yükle
+def load_db():
+    if not os.path.exists(DB_FILE):
+        save_db(default_data)
+        return default_data
+    with open(DB_FILE, 'r') as f:
+        return json.load(f)
+
+# Verileri Kaydet
+def save_db(data):
+    with open(DB_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# 1. PERSONEL LİSTESİNİ GÖNDER
-@app.route('/api/personel-listesi', methods=['GET'])
-def get_staff():
-    return jsonify(personeller)
+# --- API (Cihazların Konuştuğu Yer) ---
 
-# 2. YENİ PERSONEL EKLE (Bunu Ekledik)
-@app.route('/api/personel-ekle', methods=['POST'])
-def add_staff():
-    data = request.json
-    yeni_id = len(personeller) + 1
-    yeni_kullanici = {
-        "id": yeni_id,
-        "isim": data.get('isim'),
-        "rol": data.get('rol'),
-        "sifre": data.get('sifre'),
-        "satis": 0
-    }
-    personeller.append(yeni_kullanici)
-    return jsonify({"status": "success", "message": "Personel eklendi", "user": yeni_kullanici})
+@app.route('/api/get-all')
+def get_all():
+    return jsonify(load_db())
 
-# 3. PERSONEL BİLGİSİ GÜNCELLE (Bunu Ekledik)
-@app.route('/api/personel-guncelle', methods=['POST'])
-def update_staff():
+@app.route('/api/update-table', methods=['POST'])
+def update_table():
+    db = load_db()
     data = request.json
-    hedef_id = int(data.get('id'))
+    table_id = data.get('id')
     
-    for p in personeller:
-        if p['id'] == hedef_id:
-            p['isim'] = data.get('isim')
-            p['sifre'] = data.get('sifre')
-            p['rol'] = data.get('rol')
-            return jsonify({"status": "success", "message": "Güncellendi"})
+    for t in db['tables']:
+        if t['id'] == table_id:
+            t.update(data) # Masayı güncelle
+            break
             
-    return jsonify({"status": "error", "message": "Kullanıcı bulunamadı"}), 404
+    save_db(db)
+    return jsonify({"status": "ok"})
 
-# 4. SATIŞ EKLE
-@app.route('/api/satis-ekle', methods=['POST'])
-def add_sale():
-    data = request.json
-    # İleride buraya MySQL UPDATE komutu gelecek
+@app.route('/api/update-settings', methods=['POST'])
+def update_settings():
+    db = load_db()
+    new_rate = request.json.get('ps_rate')
+    db['settings']['ps_rate'] = float(new_rate)
+    save_db(db)
+    return jsonify({"status": "ok"})
+
+@app.route('/api/add-staff', methods=['POST'])
+def add_staff():
+    db = load_db()
+    new_user = request.json
+    new_user['id'] = len(db['staff']) + 1
+    db['staff'].append(new_user)
+    save_db(db)
     return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
