@@ -2,247 +2,169 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#050508">
-    <link rel="manifest" href="/manifest.json">
-    <title>TCFH/SOFT V6.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TCFH/SOFT V7.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Audiowide&display=swap" rel="stylesheet">
-    
     <style>
-        :root { --neon: #00f2ff; --pink: #ff0055; --bg: #050508; --panel: #11111b; }
-        body { background: var(--bg); color: white; font-family: 'Rajdhani', sans-serif; overflow: hidden; }
+        body { background: #050508; color: white; overflow: hidden; font-family: sans-serif; }
+        
+        /* CİHAZ SEÇİM EKRANI */
+        #deviceSelector { position: fixed; inset: 0; background: black; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* PC MODU */
+        body.pc-mode #main-layout { display: grid; grid-template-columns: 1fr 400px; height: 100vh; }
+        body.pc-mode #mobile-nav { display: none; }
+        
+        /* MOBİL MODU */
+        body.mobile-mode #main-layout { display: block; height: calc(100vh - 70px); overflow-y: auto; }
+        body.mobile-mode #pc-sidebar { display: none; }
+        body.mobile-mode #mobile-nav { display: flex; }
 
-        /* SCROLLBAR GİZLEME */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-
-        /* PC DÜZENİ (Split Screen) */
-        @media (min-width: 1024px) {
-            #main-layout { display: grid; grid-template-columns: 1fr 400px; height: 100vh; }
-            #mobile-nav { display: none; }
-            #pc-sidebar { display: flex; flex-direction: column; border-left: 2px solid #222; background: #0a0a12; }
-            .modal-wrapper { display: none !important; } /* PC'de modal açılmaz, sağa gelir */
-        }
-
-        /* MOBİL DÜZENİ (App Mode) */
-        @media (max-width: 1023px) {
-            #main-layout { display: block; height: calc(100vh - 65px); overflow-y: auto; }
-            #pc-sidebar { display: none; }
-            #mobile-nav { display: flex; position: fixed; bottom: 0; width: 100%; height: 65px; background: #0f0f16; border-top: 1px solid #222; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
-        }
-
-        /* ORTAK STİLLER */
-        .card { background: var(--panel); border: 1px solid #222; border-radius: 12px; padding: 15px; cursor: pointer; transition: 0.2s; position: relative; }
-        .card:hover { border-color: var(--neon); transform: translateY(-2px); }
-        .card.ps { border-top: 4px solid var(--neon); }
-        .card.kafe { border-top: 4px solid var(--pink); }
-        .card.active { border-color: var(--neon); background: #00f2ff1a; } /* Seçili masa */
-
-        .btn-large { height: 50px; border-radius: 8px; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
-        .tab-btn.active { color: var(--neon); border-bottom: 2px solid var(--neon); }
+        .card { background: #111; border: 1px solid #333; padding: 15px; border-radius: 10px; cursor: pointer; }
+        .card.active { border-color: #00f2ff; background: #001111; }
+        .ready-badge { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="loginScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-6">
-        <h1 class="text-5xl font-bold text-cyan-400 mb-2" style="font-family:'Audiowide'">TCFH</h1>
-        <p class="text-gray-500 mb-8 tracking-widest">CAFE AUTOMATION</p>
-        <div class="w-full max-w-sm bg-gray-900 p-6 rounded-2xl border border-gray-800">
-            <select id="loginUser" class="w-full bg-black border border-gray-700 p-3 rounded text-white mb-4">
-                <option value="admin">Yönetici (Admin)</option>
-                <option value="garson">Garson</option>
-            </select>
-            <input type="password" id="loginPass" class="w-full bg-black border border-gray-700 p-3 rounded text-center mb-4" placeholder="Şifre">
-            <button onclick="login()" class="btn-large bg-cyan-600 text-black">SİSTEME GİRİŞ</button>
+    <div id="deviceSelector">
+        <h1 class="text-4xl font-bold text-cyan-400 mb-8">TCFH/SOFT</h1>
+        <h2 class="text-gray-400 mb-4">Cihaz Türünü Seçin</h2>
+        <div class="flex gap-6">
+            <button onclick="setMode('pc')" class="bg-gray-800 p-6 rounded-xl border border-gray-600 hover:border-cyan-400">
+                <i class="fas fa-desktop text-4xl mb-2 text-white"></i>
+                <div class="text-xl">BİLGİSAYAR</div>
+            </button>
+            <button onclick="setMode('mobile')" class="bg-gray-800 p-6 rounded-xl border border-gray-600 hover:border-pink-400">
+                <i class="fas fa-mobile-alt text-4xl mb-2 text-white"></i>
+                <div class="text-xl">TELEFON</div>
+            </button>
         </div>
     </div>
 
-    <div id="app" class="hidden">
-        
+    <div id="app" class="hidden h-full flex flex-col">
+        <header class="bg-black p-4 border-b border-gray-800 flex justify-between items-center">
+            <div class="font-bold text-xl">TCFH/SOFT</div>
+            <div id="syncStatus" class="text-[10px] text-green-500">● CANLI</div>
+        </header>
+
         <div id="main-layout">
-            
-            <div class="flex flex-col h-full overflow-hidden relative">
-                <header class="bg-black border-b border-gray-800 p-4 flex justify-between items-center h-16 shrink-0">
-                    <div class="font-bold text-xl" style="font-family:'Audiowide'">TCFH<span class="text-cyan-400">/SOFT</span></div>
-                    <div class="flex gap-4 text-sm font-bold text-gray-500 hidden lg:flex">
-                        <button onclick="setTab('masalar')" class="hover:text-white tab-btn active">MASALAR</button>
-                        <button onclick="setTab('mutfak')" class="hover:text-white tab-btn">MUTFAK</button>
-                        <button onclick="setTab('yonetim')" class="hover:text-white tab-btn admin-only">YÖNETİM</button>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="userBadge" class="text-xs bg-gray-800 px-2 py-1 rounded text-gray-400">---</span>
-                        <i onclick="location.reload()" class="fas fa-power-off text-red-500 cursor-pointer text-lg"></i>
-                    </div>
-                </header>
-
-                <main class="flex-1 overflow-y-auto p-4 bg-black" id="mainContent">
-                    
-                    <div id="view-masalar">
-                        <div class="flex justify-between mb-4 lg:hidden">
-                            <h2 class="text-xl font-bold text-white">MASALAR</h2>
-                            <button onclick="yeniMasa()" class="text-xs bg-gray-800 px-3 py-1 rounded">+ Ekle</button>
-                        </div>
-                        <div id="masaGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                            </div>
-                    </div>
-
-                    <div id="view-mutfak" class="hidden">
-                        <h2 class="text-xl font-bold text-orange-400 mb-4">MUTFAK</h2>
-                        <div id="mutfakList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-                    </div>
-
-                    <div id="view-yonetim" class="hidden">
-                        <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
-                            <h2 class="text-xl font-bold text-cyan-400 mb-4">PERSONEL YÖNETİMİ</h2>
-                            <div id="staffList" class="space-y-3"></div>
-                        </div>
-                    </div>
-
-                </main>
-            </div>
-
-            <aside id="pc-sidebar" class="p-6 relative">
-                <div id="emptyState" class="flex flex-col items-center justify-center h-full text-gray-600">
-                    <i class="fas fa-hand-pointer text-4xl mb-2"></i>
-                    <p>İşlem yapmak için soldan bir masa seçin.</p>
+            <div class="p-4 overflow-y-auto">
+                <div id="readyOrdersArea" class="hidden bg-green-900/30 border border-green-500 p-3 rounded mb-4 ready-badge">
+                    <h3 class="font-bold text-green-400"><i class="fas fa-bell"></i> HAZIR SİPARİŞLER!</h3>
+                    <div id="readyList" class="text-sm mt-1"></div>
+                    <button onclick="clearReady()" class="text-[10px] underline mt-1">Temizle</button>
                 </div>
 
-                <div id="activeState" class="hidden flex-col h-full">
-                    <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
-                        <div>
-                            <h2 id="sideMasaAd" class="text-3xl font-bold text-white">MASA 1</h2>
-                            <div id="sideSure" class="text-cyan-400 font-mono text-xl">00:00:00</div>
-                        </div>
-                        <div class="text-right">
-                            <button onclick="toggleTime()" id="btnTime" class="bg-yellow-600 text-black px-3 py-1 rounded text-xs font-bold">DURDUR</button>
-                        </div>
-                    </div>
+                <div id="masaGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+            </div>
 
-                    <div class="grid grid-cols-3 gap-2 mb-4">
-                        <button onclick="addOrder('Çay', 20)" class="bg-gray-800 p-2 rounded text-xs hover:bg-gray-700">Çay</button>
-                        <button onclick="addOrder('Kahve', 40)" class="bg-gray-800 p-2 rounded text-xs hover:bg-gray-700">Kahve</button>
-                        <button onclick="addOrder('Nargile', 300)" class="bg-purple-900/50 border border-purple-500 p-2 rounded text-xs hover:bg-purple-900">Nargile</button>
-                        <button onclick="alert('Menü Açılacak')" class="col-span-3 bg-gray-900 border border-gray-700 p-2 rounded text-xs">TÜM MENÜYÜ GÖSTER</button>
-                    </div>
-
-                    <div id="sideAdisyon" class="flex-1 overflow-y-auto bg-gray-900 rounded-lg p-2 mb-4 space-y-1"></div>
-
-                    <div class="bg-gray-800 p-4 rounded-xl mt-auto">
-                        <div class="flex justify-between text-2xl font-bold mb-4">
+            <div id="pc-sidebar" class="bg-[#0a0a12] border-l border-gray-800 p-4 flex flex-col">
+                <h2 id="sideTitle" class="text-2xl font-bold mb-4">MASA SEÇİN</h2>
+                <div id="sideContent" class="hidden flex-col h-full">
+                    <div id="sideOrders" class="flex-1 bg-black rounded p-2 overflow-y-auto mb-4"></div>
+                    <div class="bg-gray-900 p-4 rounded">
+                        <div class="flex justify-between text-xl font-bold mb-2">
                             <span>TOPLAM:</span> <span id="sideTotal" class="text-green-400">₺0.00</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button class="btn-large bg-green-600 text-black">NAKİT</button>
-                            <button class="btn-large bg-blue-600 text-white">KART</button>
-                        </div>
-                        <button onclick="deselectTable()" class="w-full mt-2 text-gray-500 text-xs hover:text-white">SEÇİMİ KAPAT</button>
+                        <button class="w-full bg-green-600 py-3 rounded font-bold text-black mb-2">ÖDEME AL</button>
                     </div>
                 </div>
-            </aside>
-
-        </div>
-
-        <nav id="mobile-nav" class="flex justify-around items-center">
-            <button onclick="setTab('masalar')" class="flex flex-col items-center text-cyan-400"><i class="fas fa-th-large text-xl"></i><span class="text-[10px]">MASALAR</span></button>
-            <button onclick="setTab('mutfak')" class="flex flex-col items-center text-gray-500"><i class="fas fa-utensils text-xl"></i><span class="text-[10px]">MUTFAK</span></button>
-            <button onclick="setTab('yonetim')" class="flex flex-col items-center text-gray-500 admin-only"><i class="fas fa-user-cog text-xl"></i><span class="text-[10px]">YÖNETİM</span></button>
-        </nav>
-
-        <div id="mobileModal" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col p-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 id="mobMasaAd" class="text-3xl font-bold">MASA 1</h2>
-                <button onclick="closeMobileModal()" class="text-gray-500 text-2xl"><i class="fas fa-times"></i></button>
+                
+                <div class="mt-4 pt-4 border-t border-gray-800">
+                    <label class="text-xs text-gray-500">PS Saat Ücreti</label>
+                    <input type="number" id="settingPs" class="bg-black border border-gray-600 text-white p-1 w-20 text-xs" onchange="saveSettings()">
+                </div>
             </div>
-            <div class="text-center text-gray-500 mt-20">PC Sidebar mantığı burada mobilde çalışacak...</div>
         </div>
 
+        <nav id="mobile-nav" class="hidden fixed bottom-0 w-full bg-black border-t border-gray-800 h-16 justify-around items-center">
+            <button class="text-cyan-400 flex flex-col items-center"><i class="fas fa-th"></i><span class="text-[10px]">MASALAR</span></button>
+            <button class="text-gray-500 flex flex-col items-center"><i class="fas fa-utensils"></i><span class="text-[10px]">MUTFAK</span></button>
+        </nav>
     </div>
 
     <script>
-        // --- BASİT MANTIK (Frontend Demo) ---
+        let db = {};
         let activeTableId = null;
-        let isPC = window.innerWidth >= 1024;
 
-        function login() {
-            document.getElementById('loginScreen').classList.add('hidden');
+        // 1. CİHAZ SEÇİMİ
+        function setMode(mode) {
+            document.body.classList.add(mode + '-mode');
+            document.getElementById('deviceSelector').style.display = 'none';
             document.getElementById('app').classList.remove('hidden');
-            renderMasalar();
+            syncData(); // Verileri çekmeye başla
+            setInterval(syncData, 2000); // Her 2 saniyede bir güncelle
         }
 
-        function renderMasalar() {
+        // 2. VERİ SENKRONİZASYONU (CANLI)
+        async function syncData() {
+            try {
+                const res = await fetch('/api/get-all');
+                db = await res.json();
+                renderUI();
+                document.getElementById('syncStatus').style.color = '#00ff00';
+            } catch (e) {
+                document.getElementById('syncStatus').style.color = 'red';
+            }
+        }
+
+        // 3. EKRANI ÇİZ
+        function renderUI() {
             const grid = document.getElementById('masaGrid');
             grid.innerHTML = '';
-            for(let i=1; i<=8; i++) {
-                grid.innerHTML += `
-                    <div onclick="selectTable(${i})" class="card ps min-h-[120px] flex flex-col justify-between" id="masa-${i}">
-                        <div class="flex justify-between">
-                            <span class="font-bold text-lg">Masa ${i}</span>
-                            <i class="fas fa-gamepad text-gray-600"></i>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xl font-bold text-white">₺${(i*50).toFixed(2)}</div>
-                            <div class="text-xs text-cyan-500 font-mono">01:2${i}:00</div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function selectTable(id) {
-            // Önceki seçimi kaldır
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-            document.getElementById(`masa-${id}`).classList.add('active');
-            activeTableId = id;
-
-            if (window.innerWidth >= 1024) {
-                // PC MODU: Sağ tarafı doldur
-                document.getElementById('emptyState').classList.add('hidden');
-                document.getElementById('activeState').classList.remove('hidden');
-                document.getElementById('activeState').classList.add('flex');
-                document.getElementById('sideMasaAd').innerText = `MASA ${id}`;
-                document.getElementById('sideTotal').innerText = `₺${(id*50).toFixed(2)}`;
-                renderSideAdisyon();
-            } else {
-                // MOBİL MODU: Modal aç
-                document.getElementById('mobileModal').classList.remove('hidden');
-                document.getElementById('mobileModal').classList.add('flex');
-                document.getElementById('mobMasaAd').innerText = `MASA ${id}`;
-            }
-        }
-
-        function deselectTable() {
-            activeTableId = null;
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-            document.getElementById('emptyState').classList.remove('hidden');
-            document.getElementById('activeState').classList.add('hidden');
-            document.getElementById('activeState').classList.remove('flex');
-        }
-
-        function closeMobileModal() {
-            document.getElementById('mobileModal').classList.add('hidden');
-            document.getElementById('mobileModal').classList.remove('flex');
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-        }
-
-        function renderSideAdisyon() {
-            // Örnek Adisyon
-            const div = document.getElementById('sideAdisyon');
-            div.innerHTML = `
-                <div class="flex justify-between p-2 bg-gray-800 rounded mb-1 text-sm"><span>Çay x2</span><span>₺40</span></div>
-                <div class="flex justify-between p-2 bg-gray-800 rounded mb-1 text-sm"><span>Nargile</span><span>₺300</span></div>
-            `;
-        }
-
-        function setTab(tabId) {
-            document.querySelectorAll('#view-masalar, #view-mutfak, #view-yonetim').forEach(e => e.classList.add('hidden'));
-            document.getElementById('view-' + tabId).classList.remove('hidden');
             
-            // Mobil Nav Renkleri
-            document.querySelectorAll('#mobile-nav button').forEach(b => b.classList.replace('text-cyan-400', 'text-gray-500'));
-            event.currentTarget.classList.replace('text-gray-500', 'text-cyan-400');
+            // PS Fiyat Ayarı
+            document.getElementById('settingPs').value = db.settings.ps_rate;
+
+            db.tables.forEach(t => {
+                const div = document.createElement('div');
+                div.className = `card ${t.id === activeTableId ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div class="font-bold text-lg">${t.name}</div>
+                    <div class="text-xs text-gray-500">${t.status.toUpperCase()}</div>
+                `;
+                div.onclick = () => selectMasa(t.id);
+                grid.appendChild(div);
+            });
+
+            if(activeTableId) updateSidePanel();
+            checkReadyOrders();
+        }
+
+        function selectMasa(id) {
+            activeTableId = id;
+            if (document.body.classList.contains('mobile-mode')) {
+                alert("Mobilde Detay Penceresi Açılır (Şimdilik Demo)");
+            } else {
+                updateSidePanel();
+            }
+        }
+
+        function updateSidePanel() {
+            const t = db.tables.find(x => x.id === activeTableId);
+            document.getElementById('sideTitle').innerText = t.name;
+            document.getElementById('sideContent').style.display = 'flex';
+            // Burada adisyon listesi ve toplam hesaplanacak
+        }
+
+        // 4. AYAR KAYDETME (PS FİYATI DEĞİŞMİYOR SORUNU ÇÖZÜMÜ)
+        async function saveSettings() {
+            const val = document.getElementById('settingPs').value;
+            await fetch('/api/update-settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ps_rate: val })
+            });
+            alert("Fiyat Güncellendi!");
+        }
+
+        // 5. HAZIR SİPARİŞ KONTROLÜ
+        function checkReadyOrders() {
+            // Demo mantığı: Eğer sipariş durumu 'hazir' ise buraya düşer
+            // Mutfak entegrasyonu tamamlandığında burası dolacak
         }
     </script>
 </body>
