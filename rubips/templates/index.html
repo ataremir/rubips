@@ -4,229 +4,246 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050508">
     <link rel="manifest" href="/manifest.json">
-    <title>TCFH/SOFT V5.2</title>
+    <title>TCFH/SOFT V6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Audiowide&display=swap" rel="stylesheet">
     
     <style>
-        :root { --neon: #00f2ff; --bg: #050508; --panel: #0f0f16; }
+        :root { --neon: #00f2ff; --pink: #ff0055; --bg: #050508; --panel: #11111b; }
         body { background: var(--bg); color: white; font-family: 'Rajdhani', sans-serif; overflow: hidden; }
-        .hidden { display: none !important; }
-        
-        /* Kart Tasarımları */
-        .card { background: var(--panel); border: 1px solid #222; transition: 0.2s; }
-        .card:active { transform: scale(0.98); }
+
+        /* SCROLLBAR GİZLEME */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        /* PC DÜZENİ (Split Screen) */
+        @media (min-width: 1024px) {
+            #main-layout { display: grid; grid-template-columns: 1fr 400px; height: 100vh; }
+            #mobile-nav { display: none; }
+            #pc-sidebar { display: flex; flex-direction: column; border-left: 2px solid #222; background: #0a0a12; }
+            .modal-wrapper { display: none !important; } /* PC'de modal açılmaz, sağa gelir */
+        }
+
+        /* MOBİL DÜZENİ (App Mode) */
+        @media (max-width: 1023px) {
+            #main-layout { display: block; height: calc(100vh - 65px); overflow-y: auto; }
+            #pc-sidebar { display: none; }
+            #mobile-nav { display: flex; position: fixed; bottom: 0; width: 100%; height: 65px; background: #0f0f16; border-top: 1px solid #222; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+        }
+
+        /* ORTAK STİLLER */
+        .card { background: var(--panel); border: 1px solid #222; border-radius: 12px; padding: 15px; cursor: pointer; transition: 0.2s; position: relative; }
+        .card:hover { border-color: var(--neon); transform: translateY(-2px); }
         .card.ps { border-top: 4px solid var(--neon); }
-        .card.kafe { border-top: 4px solid #ff0055; }
-        
-        /* Admin/Garson Görünümü */
-        .admin-only { display: none; } /* JS ile açılacak */
+        .card.kafe { border-top: 4px solid var(--pink); }
+        .card.active { border-color: var(--neon); background: #00f2ff1a; } /* Seçili masa */
+
+        .btn-large { height: 50px; border-radius: 8px; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        .tab-btn.active { color: var(--neon); border-bottom: 2px solid var(--neon); }
     </style>
 </head>
 <body>
 
-    <div id="loginScreen" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-4">
-        <h1 class="text-4xl font-bold text-cyan-400 mb-2" style="font-family:'Audiowide'">TCFH/SOFT</h1>
-        <div class="bg-gray-900 p-6 rounded-2xl w-full max-w-sm border border-gray-800">
-            <label class="text-xs text-gray-500 block mb-1">PERSONEL SEÇİN</label>
-            <select id="loginUser" class="w-full bg-black border border-gray-700 text-white p-3 rounded mb-4">
+    <div id="loginScreen" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center p-6">
+        <h1 class="text-5xl font-bold text-cyan-400 mb-2" style="font-family:'Audiowide'">TCFH</h1>
+        <p class="text-gray-500 mb-8 tracking-widest">CAFE AUTOMATION</p>
+        <div class="w-full max-w-sm bg-gray-900 p-6 rounded-2xl border border-gray-800">
+            <select id="loginUser" class="w-full bg-black border border-gray-700 p-3 rounded text-white mb-4">
                 <option value="admin">Yönetici (Admin)</option>
-                <option value="garson1">Garson Ali</option>
-                <option value="garson2">Nargileci Memo</option>
+                <option value="garson">Garson</option>
             </select>
-            <input type="password" id="loginPass" placeholder="Şifre Girin" class="w-full bg-black border border-gray-700 text-white p-3 rounded text-center mb-4">
-            <button onclick="login()" class="w-full bg-cyan-600 text-black font-bold py-3 rounded">GİRİŞ YAP</button>
+            <input type="password" id="loginPass" class="w-full bg-black border border-gray-700 p-3 rounded text-center mb-4" placeholder="Şifre">
+            <button onclick="login()" class="btn-large bg-cyan-600 text-black">SİSTEME GİRİŞ</button>
         </div>
     </div>
 
-    <div id="mainApp" class="hidden h-screen flex flex-col">
-        <header class="bg-black border-b border-gray-800 p-3 flex justify-between items-center">
-            <div>
-                <div class="font-bold text-lg leading-none">TCFH<span class="text-cyan-400">/SOFT</span></div>
-                <div id="userBadge" class="text-[10px] text-gray-400">Giriş Yapılmadı</div>
-            </div>
+    <div id="app" class="hidden">
+        
+        <div id="main-layout">
             
-            <div class="text-right">
-                <div class="text-[10px] text-gray-500" id="ciroLabel">SENİN SATIŞIN</div>
-                <div class="text-xl font-bold text-green-400" id="canliCiro">₺0.00</div>
-            </div>
-        </header>
+            <div class="flex flex-col h-full overflow-hidden relative">
+                <header class="bg-black border-b border-gray-800 p-4 flex justify-between items-center h-16 shrink-0">
+                    <div class="font-bold text-xl" style="font-family:'Audiowide'">TCFH<span class="text-cyan-400">/SOFT</span></div>
+                    <div class="flex gap-4 text-sm font-bold text-gray-500 hidden lg:flex">
+                        <button onclick="setTab('masalar')" class="hover:text-white tab-btn active">MASALAR</button>
+                        <button onclick="setTab('mutfak')" class="hover:text-white tab-btn">MUTFAK</button>
+                        <button onclick="setTab('yonetim')" class="hover:text-white tab-btn admin-only">YÖNETİM</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="userBadge" class="text-xs bg-gray-800 px-2 py-1 rounded text-gray-400">---</span>
+                        <i onclick="location.reload()" class="fas fa-power-off text-red-500 cursor-pointer text-lg"></i>
+                    </div>
+                </header>
 
-        <main class="flex-1 overflow-y-auto p-3" id="mainContent">
-            
-            <div id="tab-masalar">
-                <div class="grid grid-cols-2 gap-3" id="masaGrid">
+                <main class="flex-1 overflow-y-auto p-4 bg-black" id="mainContent">
+                    
+                    <div id="view-masalar">
+                        <div class="flex justify-between mb-4 lg:hidden">
+                            <h2 class="text-xl font-bold text-white">MASALAR</h2>
+                            <button onclick="yeniMasa()" class="text-xs bg-gray-800 px-3 py-1 rounded">+ Ekle</button>
+                        </div>
+                        <div id="masaGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                            </div>
                     </div>
+
+                    <div id="view-mutfak" class="hidden">
+                        <h2 class="text-xl font-bold text-orange-400 mb-4">MUTFAK</h2>
+                        <div id="mutfakList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                    </div>
+
+                    <div id="view-yonetim" class="hidden">
+                        <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+                            <h2 class="text-xl font-bold text-cyan-400 mb-4">PERSONEL YÖNETİMİ</h2>
+                            <div id="staffList" class="space-y-3"></div>
+                        </div>
+                    </div>
+
+                </main>
             </div>
 
-            <div id="tab-yonetim" class="hidden">
-                <h2 class="text-cyan-400 font-bold mb-4 border-b border-gray-800 pb-2">PERSONEL LİSTESİ & KASA</h2>
-                
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="bg-gray-900 p-3 rounded border border-gray-800">
-                        <div class="text-xs text-gray-500">TOPLAM KASA</div>
-                        <div class="text-2xl font-bold text-green-400" id="adminTotalCiro">₺0.00</div>
-                    </div>
-                    <div class="bg-gray-900 p-3 rounded border border-gray-800">
-                        <div class="text-xs text-gray-500">AÇIK MASALAR</div>
-                        <div class="text-2xl font-bold text-white">5</div>
-                    </div>
+            <aside id="pc-sidebar" class="p-6 relative">
+                <div id="emptyState" class="flex flex-col items-center justify-center h-full text-gray-600">
+                    <i class="fas fa-hand-pointer text-4xl mb-2"></i>
+                    <p>İşlem yapmak için soldan bir masa seçin.</p>
                 </div>
 
-                <div class="space-y-3" id="staffListArea">
+                <div id="activeState" class="hidden flex-col h-full">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                        <div>
+                            <h2 id="sideMasaAd" class="text-3xl font-bold text-white">MASA 1</h2>
+                            <div id="sideSure" class="text-cyan-400 font-mono text-xl">00:00:00</div>
+                        </div>
+                        <div class="text-right">
+                            <button onclick="toggleTime()" id="btnTime" class="bg-yellow-600 text-black px-3 py-1 rounded text-xs font-bold">DURDUR</button>
+                        </div>
                     </div>
-                
-                <button onclick="yeniPersonelEkle()" class="w-full mt-4 border border-dashed border-gray-600 text-gray-400 p-3 rounded hover:text-white hover:border-white">
-                    + YENİ PERSONEL EKLE
-                </button>
-            </div>
 
-        </main>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <button onclick="addOrder('Çay', 20)" class="bg-gray-800 p-2 rounded text-xs hover:bg-gray-700">Çay</button>
+                        <button onclick="addOrder('Kahve', 40)" class="bg-gray-800 p-2 rounded text-xs hover:bg-gray-700">Kahve</button>
+                        <button onclick="addOrder('Nargile', 300)" class="bg-purple-900/50 border border-purple-500 p-2 rounded text-xs hover:bg-purple-900">Nargile</button>
+                        <button onclick="alert('Menü Açılacak')" class="col-span-3 bg-gray-900 border border-gray-700 p-2 rounded text-xs">TÜM MENÜYÜ GÖSTER</button>
+                    </div>
 
-        <nav class="bg-black border-t border-gray-800 h-16 flex justify-around items-center">
-            <button onclick="setTab('masalar')" class="text-cyan-400 flex flex-col items-center">
-                <i class="fas fa-th-large text-xl"></i><span class="text-[10px]">MASALAR</span>
-            </button>
-            <button onclick="setTab('yonetim')" class="text-gray-500 flex flex-col items-center" id="navYonetim">
-                <i class="fas fa-users-cog text-xl"></i><span class="text-[10px]">YÖNETİM</span>
-            </button>
-            <button onclick="logout()" class="text-red-500 flex flex-col items-center">
-                <i class="fas fa-power-off text-xl"></i><span class="text-[10px]">ÇIKIŞ</span>
-            </button>
+                    <div id="sideAdisyon" class="flex-1 overflow-y-auto bg-gray-900 rounded-lg p-2 mb-4 space-y-1"></div>
+
+                    <div class="bg-gray-800 p-4 rounded-xl mt-auto">
+                        <div class="flex justify-between text-2xl font-bold mb-4">
+                            <span>TOPLAM:</span> <span id="sideTotal" class="text-green-400">₺0.00</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button class="btn-large bg-green-600 text-black">NAKİT</button>
+                            <button class="btn-large bg-blue-600 text-white">KART</button>
+                        </div>
+                        <button onclick="deselectTable()" class="w-full mt-2 text-gray-500 text-xs hover:text-white">SEÇİMİ KAPAT</button>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+
+        <nav id="mobile-nav" class="flex justify-around items-center">
+            <button onclick="setTab('masalar')" class="flex flex-col items-center text-cyan-400"><i class="fas fa-th-large text-xl"></i><span class="text-[10px]">MASALAR</span></button>
+            <button onclick="setTab('mutfak')" class="flex flex-col items-center text-gray-500"><i class="fas fa-utensils text-xl"></i><span class="text-[10px]">MUTFAK</span></button>
+            <button onclick="setTab('yonetim')" class="flex flex-col items-center text-gray-500 admin-only"><i class="fas fa-user-cog text-xl"></i><span class="text-[10px]">YÖNETİM</span></button>
         </nav>
+
+        <div id="mobileModal" class="fixed inset-0 bg-black/95 z-[60] hidden flex-col p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="mobMasaAd" class="text-3xl font-bold">MASA 1</h2>
+                <button onclick="closeMobileModal()" class="text-gray-500 text-2xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="text-center text-gray-500 mt-20">PC Sidebar mantığı burada mobilde çalışacak...</div>
+        </div>
+
     </div>
 
     <script>
-        // SANAL VERİTABANI
-        const users = [
-            {id: 'admin', name: 'Patron', role: 'admin', pass: '1907', satis: 0},
-            {id: 'garson1', name: 'Garson Ali', role: 'garson', pass: '1234', satis: 1450},
-            {id: 'garson2', name: 'Nargileci Memo', role: 'garson', pass: '1234', satis: 850}
-        ];
-
-        let currentUser = null;
+        // --- BASİT MANTIK (Frontend Demo) ---
+        let activeTableId = null;
+        let isPC = window.innerWidth >= 1024;
 
         function login() {
-            const uid = document.getElementById('loginUser').value;
-            const pass = document.getElementById('loginPass').value;
-            const user = users.find(u => u.id === uid);
-
-            if(user && user.pass === pass) {
-                currentUser = user;
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                
-                // KİMLİK AYARLARI
-                document.getElementById('userBadge').innerText = user.name;
-                
-                if(user.role === 'admin') {
-                    // Admin ise Toplam Kasayı Göster
-                    const toplam = users.reduce((a, b) => a + b.satis, 0);
-                    document.getElementById('canliCiro').innerText = `₺${toplam}`;
-                    document.getElementById('adminTotalCiro').innerText = `₺${toplam}`;
-                    document.getElementById('ciroLabel').innerText = "TOPLAM KASA";
-                    renderStaffList();
-                } else {
-                    // Garson ise Sadece Kendi Satışını Göster
-                    document.getElementById('canliCiro').innerText = `₺${user.satis}`;
-                    document.getElementById('ciroLabel').innerText = "SENİN KAZANDIRDIĞIN";
-                    // Yönetim sekmesini gizle
-                    document.getElementById('navYonetim').classList.add('hidden');
-                }
-                
-                renderMasalar();
-            } else {
-                alert("Şifre Hatalı!");
-            }
-        }
-
-        function setTab(tab) {
-            if(tab === 'masalar') {
-                document.getElementById('tab-masalar').classList.remove('hidden');
-                document.getElementById('tab-yonetim').classList.add('hidden');
-            } else if(tab === 'yonetim') {
-                document.getElementById('tab-masalar').classList.add('hidden');
-                document.getElementById('tab-yonetim').classList.remove('hidden');
-            }
-        }
-
-        function renderStaffList() {
-            const list = document.getElementById('staffListArea');
-            list.innerHTML = '';
-            users.forEach(u => {
-                list.innerHTML += `
-                    <div class="bg-gray-900 p-3 rounded flex justify-between items-center border border-gray-800">
-                        <div>
-                            <div class="font-bold text-white">${u.name}</div>
-                            <div class="text-[10px] text-gray-500 uppercase">${u.role}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-green-400 font-bold">₺${u.satis}</div>
-                            <button class="text-[10px] text-cyan-400 underline">Düzenle</button>
-                        </div>
-                    </div>
-                `;
-            });
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            renderMasalar();
         }
 
         function renderMasalar() {
-            // Örnek Masalar
             const grid = document.getElementById('masaGrid');
             grid.innerHTML = '';
-            for(let i=1; i<=6; i++) {
+            for(let i=1; i<=8; i++) {
                 grid.innerHTML += `
-                    <div class="card ps p-4 rounded-xl min-h-[100px] flex flex-col justify-between">
-                        <div class="font-bold">Masa ${i}</div>
-                        <div class="text-right text-gray-400 text-sm">BOŞ</div>
+                    <div onclick="selectTable(${i})" class="card ps min-h-[120px] flex flex-col justify-between" id="masa-${i}">
+                        <div class="flex justify-between">
+                            <span class="font-bold text-lg">Masa ${i}</span>
+                            <i class="fas fa-gamepad text-gray-600"></i>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-bold text-white">₺${(i*50).toFixed(2)}</div>
+                            <div class="text-xs text-cyan-500 font-mono">01:2${i}:00</div>
+                        </div>
                     </div>
                 `;
             }
         }
 
-        function logout() { location.reload(); }
-        function yeniPersonelEkle() { alert("Yeni personel ekleme ekranı açılacak..."); }
-        // YENİ PERSONEL EKLEME FONKSİYONU
-async function sistemePersonelEkle() {
-    const isim = prompt("Yeni Personel Adı:");
-    const rol = prompt("Rolü (admin/garson):").toLowerCase();
-    const sifre = prompt("Şifresi:");
+        function selectTable(id) {
+            // Önceki seçimi kaldır
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            document.getElementById(`masa-${id}`).classList.add('active');
+            activeTableId = id;
 
-    if(isim && rol && sifre) {
-        const res = await fetch('/api/personel-ekle', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ isim, rol, sifre })
-        });
-        
-        if(res.ok) {
-            alert("Personel Eklendi!");
-            location.reload(); // Listeyi yenilemek için sayfayı yeniler
+            if (window.innerWidth >= 1024) {
+                // PC MODU: Sağ tarafı doldur
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('activeState').classList.remove('hidden');
+                document.getElementById('activeState').classList.add('flex');
+                document.getElementById('sideMasaAd').innerText = `MASA ${id}`;
+                document.getElementById('sideTotal').innerText = `₺${(id*50).toFixed(2)}`;
+                renderSideAdisyon();
+            } else {
+                // MOBİL MODU: Modal aç
+                document.getElementById('mobileModal').classList.remove('hidden');
+                document.getElementById('mobileModal').classList.add('flex');
+                document.getElementById('mobMasaAd').innerText = `MASA ${id}`;
+            }
         }
-    }
-}
 
-// PERSONEL GÜNCELLEME FONKSİYONU
-async function personelGuncelle(id) {
-    // HTML'deki inputlardan veriyi al
-    const yeniIsim = document.getElementById('p_name_' + id).value;
-    const yeniSifre = document.getElementById('p_pass_' + id).value;
-    
-    // Python'a gönder
-    const res = await fetch('/api/personel-guncelle', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ id: id, isim: yeniIsim, sifre: yeniSifre, rol: 'garson' }) // Rolü şimdilik sabit veya inputtan alabilirsin
-    });
+        function deselectTable() {
+            activeTableId = null;
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+            document.getElementById('emptyState').classList.remove('hidden');
+            document.getElementById('activeState').classList.add('hidden');
+            document.getElementById('activeState').classList.remove('flex');
+        }
 
-    if(res.ok) {
-        alert("Bilgiler Güncellendi!");
-    } else {
-        alert("Hata oluştu!");
-    }
-}
+        function closeMobileModal() {
+            document.getElementById('mobileModal').classList.add('hidden');
+            document.getElementById('mobileModal').classList.remove('flex');
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+        }
+
+        function renderSideAdisyon() {
+            // Örnek Adisyon
+            const div = document.getElementById('sideAdisyon');
+            div.innerHTML = `
+                <div class="flex justify-between p-2 bg-gray-800 rounded mb-1 text-sm"><span>Çay x2</span><span>₺40</span></div>
+                <div class="flex justify-between p-2 bg-gray-800 rounded mb-1 text-sm"><span>Nargile</span><span>₺300</span></div>
+            `;
+        }
+
+        function setTab(tabId) {
+            document.querySelectorAll('#view-masalar, #view-mutfak, #view-yonetim').forEach(e => e.classList.add('hidden'));
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+            
+            // Mobil Nav Renkleri
+            document.querySelectorAll('#mobile-nav button').forEach(b => b.classList.replace('text-cyan-400', 'text-gray-500'));
+            event.currentTarget.classList.replace('text-gray-500', 'text-cyan-400');
+        }
     </script>
 </body>
 </html>
